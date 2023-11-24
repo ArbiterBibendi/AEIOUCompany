@@ -1,9 +1,16 @@
-﻿using System.Linq;
+﻿using System;
+using System.Diagnostics;
+using System.IO;
+using System.IO.Pipes;
+using System.Linq;
+using System.Reflection;
+using System.Text;
 using BepInEx;
 using BepInEx.Logging;
 using HarmonyLib;
+using UnityEngine;
 
-namespace LCMod
+namespace AEIOU_Company
 {
     [BepInPlugin(PluginInfo.PLUGIN_GUID, PluginInfo.PLUGIN_NAME, PluginInfo.PLUGIN_VERSION)]
     public class Plugin : BaseUnityPlugin
@@ -12,18 +19,20 @@ namespace LCMod
         protected static new ManualLogSource Logger = null;
         public static void Log(object data)
         {
-            Logger.LogInfo(data);
+            Logger?.LogInfo(data);
         }
         public static void LogError(object data)
         {
-            Logger.LogError(data);
+            Logger?.LogError(data);
         }
 
-        private void Awake()
+        public void Awake()
         {
             Harmony harmony = new Harmony(PluginInfo.PLUGIN_GUID);
             Harmony = harmony;
             Logger = base.Logger;
+
+            TTS.Init();
 
             base.Logger.LogInfo($"Plugin {PluginInfo.PLUGIN_GUID} is loaded!");
             Harmony.PatchAll();
@@ -31,9 +40,12 @@ namespace LCMod
         }
         public void OnDestroy()
         {
-            tweaksForTesting();
+            TweaksForTesting();
+            TTS.Speak("Starting Up");
         }
-        private void tweaksForTesting()
+        
+        
+        private void TweaksForTesting()
         {
             LCModUtils modUtils = new LCModUtils(base.Logger, Harmony);
             modUtils.DisableFullscreen();

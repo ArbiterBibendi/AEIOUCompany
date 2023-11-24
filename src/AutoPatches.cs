@@ -1,20 +1,36 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
-using System.Reflection.Emit;
-using GameNetcodeStuff;
 using HarmonyLib;
-using Mono.Cecil.Cil;
-using Unity;
-using Unity.Netcode;
-using UnityEngine;
-using OpCodes = System.Reflection.Emit.OpCodes;
+using GameNetcodeStuff;
 
-namespace LCMod;
+
+
+namespace AEIOU_Company;
 
 [HarmonyPatch]
 public class AutoPatches
 {
-    
+    [HarmonyPatch(typeof(HUDManager), "AddTextToChatOnServer")]
+    [HarmonyPrefix]
+    public static void AddTextToChatOnServerPostfix(string chatMessage, int playerId)
+    {
+        Plugin.Log($"AddTextToChatOnServer: {chatMessage} {playerId}");
+        TTS.Speak(chatMessage);
+    }
+    [HarmonyPatch(typeof(HUDManager), "AddChatMessage")]
+    [HarmonyPrefix]
+    public static void AddChatMessagePostfix(string chatMessage, string nameOfUserWhoTyped)
+    {
+        Plugin.Log($"AddChatMessage: {chatMessage} {nameOfUserWhoTyped}");
+    }
+    [HarmonyPatch(typeof(HUDManager), "AddPlayerChatMessageClientRpc")]
+    [HarmonyPrefix]
+    public static void AddPlayerChatMessageClientRpcPostfix(string chatMessage, int playerId)
+    {
+        Plugin.Log($"AddPlayerChatMessageClientRpc: {chatMessage} {playerId}");
+    }
+    [HarmonyPatch(typeof(HUDManager), "AddPlayerChatMessageServerRpc")]
+    [HarmonyPrefix]
+    public static void AddPlayerChatMessageServerRpcPostfix(string chatMessage, int playerId)
+    {
+        Plugin.Log($"AddPlayerChatMessageServerRpc: {chatMessage} {playerId}");
+    }
 }

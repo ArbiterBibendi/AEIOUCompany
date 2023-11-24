@@ -1,3 +1,5 @@
 /bin
 /obj
-/lib
+/lib/Unity*
+/lib/System*
+/lib/Assembly-CSharp.dll

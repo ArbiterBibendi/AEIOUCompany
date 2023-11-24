@@ -10,7 +10,7 @@ using UnityEngine.Events;
 using UnityEngine.SceneManagement;
 using UnityEngine.UIElements;
 
-namespace LCMod;
+namespace AEIOU_Company;
 public class LCModUtils
 {
     private static ManualLogSource _logger = null;

@@ -1,8 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.1</TargetFramework>
-    <AssemblyName>AEIOU Company</AssemblyName>
+    <TargetFramework>netframework4.8</TargetFramework>
+    <AssemblyName>AEIOUCompany</AssemblyName>
     <Description>Jogn Maden</Description>
     <Version>1.0.0</Version>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -17,8 +17,6 @@
   </ItemGroup>
   <ItemGroup>
     <Reference Include="lib/Assembly-CSharp.dll" />
-    <Reference Include="lib/Unity.Netcode.Runtime.dll" />
-    <Reference Include="lib/Unity.Netcode.Components.dll" />
   </ItemGroup>
   
   <ItemGroup Condition="'$(TargetFramework.TrimEnd(`0123456789`))' == 'net'">
