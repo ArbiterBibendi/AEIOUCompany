@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Specialized;
 using System.IO;
 using System.IO.Pipes;
 using System.Text;
@@ -41,6 +40,11 @@ namespace Speak
         {
             while (!_shouldCloseConnection)
             {
+                if (!namedPipeServerStream.IsConnected)
+                {
+                    _shouldCloseConnection = true;
+                    break;
+                }
                 try
                 {
                     string line = streamReader.ReadLine();
