@@ -40,6 +40,7 @@ public static class TTS
                 Plugin.Log("ConnectingToPipe");
                 _namedPipeClientStream.Connect();
             }
+            Plugin.Log($"Sending: msgA={message}]");
             _streamWriter.WriteLine($"msgA={message}]"); // ] to close off any accidentally opened talk commands
             _streamWriter.Flush();
         }
