@@ -4,6 +4,8 @@ using System.Reflection.Emit;
 using GameNetcodeStuff;
 using System.Linq;
 using TMPro;
+using UnityEngine;
+using Dissonance.Integrations.Unity_NFGO;
 
 
 
@@ -16,11 +18,40 @@ public class AutoPatches
     private static TMP_InputField chatTextField = null;
     [HarmonyPatch(typeof(HUDManager), "AddTextToChatOnServer")]
     [HarmonyPrefix]
-    public static void AddTextToChatOnServerPostfix(string chatMessage, int playerId)
+    public static void AddTextToChatOnServerPostfix(HUDManager __instance, string chatMessage, int playerId)
     {
         Plugin.Log($"AddTextToChatOnServer: {chatMessage} {playerId}");
         TTS.Speak(chatMessage);
+        PlayerControllerB player = null;
+        for (int i = 0; i < __instance.playersManager.allPlayerScripts.Length; i++)
+        {
+            if ((int)__instance.playersManager.allPlayerScripts[i].playerClientId == playerId)
+            {
+                player = __instance.playersManager.allPlayerScripts[i];
+                if (player.currentVoiceChatAudioSource)
+                {
+                    Plugin.Log("audio source null");
+                    return;
+                }
+            }
+        }
+        //if (player == null)
+        //{
+        //    Plugin.Log("couldnt find player");
+        //    return;
+        //}
+        //AudioSource audioSource = player.gameObject.GetComponentInChildren<AudioSource>();
+        //if (audioSource == null)
+        //{
+        //    return;
+        //}
+        //audioSource.clip = AudioClip.Create("AEIOUCLIP", 11025, 1, 1000, false);
+        //audioSource.clip.SetData(TTS.SpeakToMemory(chatMessage), 0);
+        //audioSource.clip.LoadAudioData();
+        //audioSource.Play();
+        //Plugin.Log($"Playing audio: {audioSource.ToString()}");
     }
+
     [HarmonyPatch(typeof(HUDManager), "EnableChat_performed")]
     [HarmonyPostfix]
     public static void EnableChat_performedPostfix(ref TMP_InputField ___chatTextField)
@@ -53,7 +84,6 @@ public class AutoPatches
                 {
                     foundFirstInstruction = true;
                     instructionToChange = instruction;
-                    Plugin.Log("instructionToChange = instruction");
                     continue;
                 }
                 if (instruction.opcode == OpCodes.Bge && foundFirstInstruction)

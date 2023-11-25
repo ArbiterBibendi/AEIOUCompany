@@ -8,6 +8,7 @@ using System.Text;
 using BepInEx;
 using BepInEx.Logging;
 using HarmonyLib;
+using TMPro;
 using UnityEngine;
 
 namespace AEIOU_Company

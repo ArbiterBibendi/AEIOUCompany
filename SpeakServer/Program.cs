@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.IO;
 using System.IO.Pipes;
+using System.Linq.Expressions;
 using System.Text;
 using SharpTalk;
 
@@ -53,6 +54,7 @@ namespace Speak
                 try
                 {
                     string line = streamReader.ReadLine();
+                    namedPipeServerStream.Flush();
                     Console.WriteLine(line);
                     HandleMessage(line);
                 }

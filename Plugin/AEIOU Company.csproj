@@ -17,6 +17,7 @@
   </ItemGroup>
   <ItemGroup>
     <Reference Include="lib/Assembly-CSharp.dll" />
+    <Reference Include="lib/Unity.Netcode.Runtime.dll" />
     <Reference Include="lib/Unity.TextMeshPro.dll" />
   </ItemGroup>
   
