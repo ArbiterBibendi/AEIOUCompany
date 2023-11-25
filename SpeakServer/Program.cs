@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
 using System.IO.Pipes;
 using System.Text;
@@ -33,6 +34,10 @@ namespace Speak
                 ListenForMessages();
 
                 namedPipeServerStream.Disconnect();
+                if (Process.GetProcessesByName("Lethal Company.exe").Length == 0)
+                {
+                    _shouldCloseServer = true;
+                }
             }
             tts.Sync();          
         }
