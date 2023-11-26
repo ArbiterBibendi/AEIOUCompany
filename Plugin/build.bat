@@ -8,3 +8,4 @@ copy "lib\FonixTalk.dll" "%GAME_PATH%\BepInEx\plugins"
 copy "lib\AEIOUSpeak.exe" "%GAME_PATH%\BepInEx\plugins"
 copy "lib\ftalk_us.dic" "%GAME_PATH%\BepInEx\plugins"
 copy "lib\ftalk_us.dll" "%GAME_PATH%\BepInEx\plugins"
+exit
