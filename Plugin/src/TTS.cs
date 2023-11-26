@@ -12,7 +12,6 @@ public static class TTS
     static readonly int IN_BUFFER_SIZE = 8388608; // 8MB pcm audio
     private static NamedPipeClientStream _namedPipeClientStream;
     private static StreamWriter _streamWriter;
-    private static StreamReader _streamReader;
     private static BinaryReader _binaryReader;
     private static bool _initialized = false;
     public static void Init()

@@ -39,10 +39,6 @@ namespace Speak
                 {
                     namedPipeServerStream.Disconnect();
                 }
-                if (Process.GetProcessesByName("Lethal Company.exe").Length == 0)
-                {
-                    _shouldCloseServer = true;
-                }
             }
             tts.Sync();          
         }

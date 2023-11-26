@@ -16,22 +16,21 @@ public class AutoPatches
 {
     private static readonly int NEW_CHAT_SIZE = 8000;
     private static TMP_InputField chatTextField = null;
-    [HarmonyPatch(typeof(HUDManager), "AddTextToChatOnServer")]
+    [HarmonyPatch(typeof(HUDManager), "AddChatMessage")]
     [HarmonyPrefix]
-    public static void AddTextToChatOnServerPostfix(HUDManager __instance, string chatMessage, int playerId)
+    public static void AddChatMessagePostfix(HUDManager __instance, string chatMessage, string nameOfUserWhoTyped)
     {
-        Plugin.Log($"AddTextToChatOnServer: {chatMessage} {playerId}");
+        if (__instance.lastChatMessage == chatMessage)
+        {
+            return;
+        }
+        Plugin.Log($"AddTextToChatOnServer: {chatMessage} {nameOfUserWhoTyped}");
         PlayerControllerB player = null;
         for (int i = 0; i < __instance.playersManager.allPlayerScripts.Length; i++)
         {
-            if ((int)__instance.playersManager.allPlayerScripts[i].playerClientId == playerId)
+            if (__instance.playersManager.allPlayerScripts[i].playerUsername == nameOfUserWhoTyped)
             {
                 player = __instance.playersManager.allPlayerScripts[i];
-                if (player.currentVoiceChatAudioSource)
-                {
-                    Plugin.Log("audio source null");
-                    return;
-                }
             }
         }
         if (player == null)
@@ -40,11 +39,14 @@ public class AutoPatches
             return;
         }
         
-        AudioSource audioSource = player.gameObject.GetComponentByName("AEIOUMODSOURCE")
-            ? (AudioSource)player.gameObject.GetComponentByName("AEIOUMODSOURCE")
-            : player.gameObject.AddComponent<AudioSource>();
-
-        audioSource.name = "AEIOUMODSOURCE";
+        GameObject AEIOUSpeakObject = player.gameObject.transform.Find("AEIOUSpeakObject")?.gameObject;
+        if (AEIOUSpeakObject == null)
+        {
+            AEIOUSpeakObject = new GameObject("AEIOUSpeakObject");
+            AEIOUSpeakObject.transform.parent = player.transform;
+            AEIOUSpeakObject.AddComponent<AudioSource>();
+        }
+        AudioSource audioSource = AEIOUSpeakObject.GetComponent<AudioSource>();
         if (audioSource == null)
         {
             Plugin.LogError($"Couldn't speak, AudioSource was null");
@@ -54,10 +56,11 @@ public class AutoPatches
         float[] samples = TTS.SpeakToMemory(chatMessage);
         audioSource.clip = AudioClip.Create("AEIOUCLIP", samples.Length, 1, 11025, false);
         audioSource.clip.SetData(samples, 0);
-        audioSource.outputAudioMixerGroup = SoundManager.Instance.playerVoiceMixers[playerId];
-        audioSource.volume = SoundManager.Instance.playerVoiceVolumes[playerId];
+        audioSource.outputAudioMixerGroup = SoundManager.Instance.playerVoiceMixers[player.playerClientId];
+        audioSource.volume = SoundManager.Instance.playerVoiceVolumes[player.playerClientId];
         audioSource.dopplerLevel = 0f;
         audioSource.pitch = 1f;
+        audioSource.spatialize = true;
         audioSource.Play();
         Plugin.Log($"Playing audio: {audioSource.ToString()}");
     }
