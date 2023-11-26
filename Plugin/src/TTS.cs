@@ -75,8 +75,12 @@ public static class TTS
             int i = 0;
             while (nextFloat != -2.69f) //0xdeadbeef is pcm terminator defined in SpeakServer.Program
             {
+                floatBuffer[i] = (float)0x00000000;
                 nextFloat = _binaryReader.ReadSingle();
-                floatBuffer[i] = nextFloat;
+                if (nextFloat != -2.69f)
+                {
+                    floatBuffer[i] = nextFloat;
+                }
                 i++;
             }
             Plugin.Log($"END");

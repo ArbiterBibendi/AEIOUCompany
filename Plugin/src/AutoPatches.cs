@@ -21,7 +21,6 @@ public class AutoPatches
     public static void AddTextToChatOnServerPostfix(HUDManager __instance, string chatMessage, int playerId)
     {
         Plugin.Log($"AddTextToChatOnServer: {chatMessage} {playerId}");
-        //TTS.Speak(chatMessage);
         PlayerControllerB player = null;
         for (int i = 0; i < __instance.playersManager.allPlayerScripts.Length; i++)
         {
@@ -40,21 +39,26 @@ public class AutoPatches
             Plugin.Log("couldnt find player");
             return;
         }
-        AudioSource audioSource = player.gameObject.GetComponentInChildren<AudioSource>();
+        
+        AudioSource audioSource = player.gameObject.GetComponentByName("AEIOUMODSOURCE")
+            ? (AudioSource)player.gameObject.GetComponentByName("AEIOUMODSOURCE")
+            : player.gameObject.AddComponent<AudioSource>();
+
+        audioSource.name = "AEIOUMODSOURCE";
         if (audioSource == null)
         {
+            Plugin.LogError($"Couldn't speak, AudioSource was null");
             return;
         }
+        
         float[] samples = TTS.SpeakToMemory(chatMessage);
-        Plugin.Log($"Begin the shittening");
         audioSource.clip = AudioClip.Create("AEIOUCLIP", samples.Length, 1, 11025, false);
-        Plugin.Log($"Begin the shittening2");
         audioSource.clip.SetData(samples, 0);
-        Plugin.Log($"Begin the shittening3");
-        audioSource.clip.LoadAudioData();
-        Plugin.Log($"Begin the shittening4");
+        audioSource.outputAudioMixerGroup = SoundManager.Instance.playerVoiceMixers[playerId];
+        audioSource.volume = SoundManager.Instance.playerVoiceVolumes[playerId];
+        audioSource.dopplerLevel = 0f;
+        audioSource.pitch = 1f;
         audioSource.Play();
-        Plugin.Log($"Begin the shittening5");
         Plugin.Log($"Playing audio: {audioSource.ToString()}");
     }
 
