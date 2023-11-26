@@ -1,4 +1,5 @@
 ﻿using System;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Pipes;
@@ -15,7 +16,7 @@ namespace Speak
 
         static NamedPipeServerStream namedPipeServerStream = null;
         static StreamReader streamReader = null;
-        static StreamWriter streamWriter = null;
+        static BinaryWriter binaryWriter = null;
         static FonixTalkEngine tts = null;
 
         static readonly string MESSAGE_PREFIX = "msg=";
@@ -24,7 +25,7 @@ namespace Speak
         {
             namedPipeServerStream = new NamedPipeServerStream("AEIOUCOMPANYMOD");
             streamReader = new StreamReader(namedPipeServerStream, Encoding.UTF8, true, 8192, true);
-            streamWriter = new StreamWriter(namedPipeServerStream, Encoding.UTF8, 8192, true);
+            binaryWriter = new BinaryWriter(namedPipeServerStream, Encoding.UTF8, true);
             tts = new FonixTalkEngine();
 
             while (!_shouldCloseServer)
@@ -33,8 +34,11 @@ namespace Speak
                 Console.WriteLine("Connected");
 
                 ListenForMessages();
-
-                namedPipeServerStream.Disconnect();
+                
+                if (namedPipeServerStream.IsConnected)
+                {
+                    namedPipeServerStream.Disconnect();
+                }
                 if (Process.GetProcessesByName("Lethal Company.exe").Length == 0)
                 {
                     _shouldCloseServer = true;
@@ -54,7 +58,6 @@ namespace Speak
                 try
                 {
                     string line = streamReader.ReadLine();
-                    namedPipeServerStream.Flush();
                     Console.WriteLine(line);
                     HandleMessage(line);
                 }
@@ -81,7 +84,19 @@ namespace Speak
             {
                 Console.WriteLine("Stream");
                 string message = line.Substring(MESSAGE_PREFIX.Length);
-                tts.SpeakToStream(namedPipeServerStream, message);
+                Console.WriteLine("Stream1");
+                byte[] buffer = tts.SpeakToMemory(message);
+                tts.Sync();
+                for (int i = 0; i < buffer.Length - 1; i += 2)
+                {
+                    float sample = (float)BitConverter.ToInt16(buffer, i);
+                    binaryWriter.Write(sample);
+                }
+                Console.WriteLine("Stream2");
+                binaryWriter.Write(-2.69f); // shouldnt occur in 16 bit pcm audio??? so we use as terminator
+                Console.WriteLine(-2.69f);
+                binaryWriter.Flush();
+                Console.WriteLine("Stream4");
             }
             else if (line.StartsWith(MESSAGE_ALOUD_PREFIX, StringComparison.Ordinal))
             {

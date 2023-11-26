@@ -8,7 +8,8 @@ using System.Text;
 namespace AEIOU_Company;
 public static class TTS
 {
-    static readonly int BUFFER_SIZE = 8192;
+    static readonly int OUT_BUFFER_SIZE = 8192; // text
+    static readonly int IN_BUFFER_SIZE = 8388608; // 8MB pcm audio
     private static NamedPipeClientStream _namedPipeClientStream;
     private static StreamWriter _streamWriter;
     private static StreamReader _streamReader;
@@ -20,8 +21,7 @@ public static class TTS
         try
         {
             _namedPipeClientStream = new NamedPipeClientStream("AEIOUCOMPANYMOD");
-            _streamWriter = new StreamWriter(_namedPipeClientStream, Encoding.UTF8, BUFFER_SIZE, true);
-            _streamReader = new StreamReader(_namedPipeClientStream, Encoding.UTF8, false, BUFFER_SIZE, true);
+            _streamWriter = new StreamWriter(_namedPipeClientStream, Encoding.UTF8, OUT_BUFFER_SIZE, true);
             _binaryReader = new BinaryReader(_namedPipeClientStream, Encoding.UTF8, true);
         }
         catch (IOException e)
@@ -70,24 +70,16 @@ public static class TTS
             Plugin.Log($"Sending: msg={message}]");
             _streamWriter.WriteLine($"msg={message}]"); // ] to close off any accidentally opened talk commands
             _streamWriter.Flush();
-
-            char[] buffer = new char[BUFFER_SIZE*64];
-            int nextCharacter = -2;
-            while (nextCharacter != -1  || nextCharacter != 0)
+            float[] floatBuffer = new float[IN_BUFFER_SIZE];
+            float nextFloat = 0f;
+            int i = 0;
+            while (nextFloat != -2.69f) //0xdeadbeef is pcm terminator defined in SpeakServer.Program
             {
-                int i = 0;
-                _streamReader.ReadBlock(buffer, i * BUFFER_SIZE, BUFFER_SIZE);
-                nextCharacter = _streamReader.Peek();
+                nextFloat = _binaryReader.ReadSingle();
+                floatBuffer[i] = nextFloat;
                 i++;
-                Plugin.Log("reading stream: " + nextCharacter);
             }
-            byte[] bytesBuffer = Encoding.UTF8.GetBytes(buffer);
-            float[] floatBuffer = new float[BUFFER_SIZE * 8];
-            for (int i = 0; i < floatBuffer.Length; i++)
-            {
-                floatBuffer[i] = BitConverter.ToSingle(bytesBuffer, i*4);
-                Plugin.Log(floatBuffer[i]);
-            }
+            Plugin.Log($"END");
             return floatBuffer;
         }
         catch (IOException e)

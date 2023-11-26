@@ -21,7 +21,7 @@ public class AutoPatches
     public static void AddTextToChatOnServerPostfix(HUDManager __instance, string chatMessage, int playerId)
     {
         Plugin.Log($"AddTextToChatOnServer: {chatMessage} {playerId}");
-        TTS.Speak(chatMessage);
+        //TTS.Speak(chatMessage);
         PlayerControllerB player = null;
         for (int i = 0; i < __instance.playersManager.allPlayerScripts.Length; i++)
         {
@@ -35,21 +35,27 @@ public class AutoPatches
                 }
             }
         }
-        //if (player == null)
-        //{
-        //    Plugin.Log("couldnt find player");
-        //    return;
-        //}
-        //AudioSource audioSource = player.gameObject.GetComponentInChildren<AudioSource>();
-        //if (audioSource == null)
-        //{
-        //    return;
-        //}
-        //audioSource.clip = AudioClip.Create("AEIOUCLIP", 11025, 1, 1000, false);
-        //audioSource.clip.SetData(TTS.SpeakToMemory(chatMessage), 0);
-        //audioSource.clip.LoadAudioData();
-        //audioSource.Play();
-        //Plugin.Log($"Playing audio: {audioSource.ToString()}");
+        if (player == null)
+        {
+            Plugin.Log("couldnt find player");
+            return;
+        }
+        AudioSource audioSource = player.gameObject.GetComponentInChildren<AudioSource>();
+        if (audioSource == null)
+        {
+            return;
+        }
+        float[] samples = TTS.SpeakToMemory(chatMessage);
+        Plugin.Log($"Begin the shittening");
+        audioSource.clip = AudioClip.Create("AEIOUCLIP", samples.Length, 1, 11025, false);
+        Plugin.Log($"Begin the shittening2");
+        audioSource.clip.SetData(samples, 0);
+        Plugin.Log($"Begin the shittening3");
+        audioSource.clip.LoadAudioData();
+        Plugin.Log($"Begin the shittening4");
+        audioSource.Play();
+        Plugin.Log($"Begin the shittening5");
+        Plugin.Log($"Playing audio: {audioSource.ToString()}");
     }
 
     [HarmonyPatch(typeof(HUDManager), "EnableChat_performed")]
