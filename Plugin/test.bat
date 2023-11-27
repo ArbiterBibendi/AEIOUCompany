@@ -5,3 +5,6 @@ if "%1" == "both" (
     timeout /t 10
     start /min "Client" "E:\SteamLibrary\steamapps\common\Lethal Company\Lethal Company.exe" -screen-height 600 -screen-width 800 -screen-fullscreen 0
 )
+if "%1" == "normal" (
+    start "Client" "E:\SteamLibrary\steamapps\common\Lethal Company\Lethal Company.exe" -screen-height 1080 -screen-width 1920 -screen-fullscreen 1
+)
