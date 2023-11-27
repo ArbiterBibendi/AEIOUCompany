@@ -34,15 +34,15 @@ namespace AEIOU_Company
             Logger = base.Logger;
 
             TTS.Init();
-
             base.Logger.LogInfo($"Plugin {PluginInfo.PLUGIN_GUID} is loaded!");
             Harmony.PatchAll();
             base.Logger.LogInfo($"Plugin total patches appled: {Harmony.GetPatchedMethods().Count()}");
         }
         public void OnDestroy()
         {
-            //TweaksForTesting();
+            TweaksForTesting();
             TTS.Speak("Starting Up");
+            TTS.SpeakToMemory("drake");
         }
         
         

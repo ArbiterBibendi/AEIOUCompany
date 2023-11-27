@@ -83,14 +83,14 @@ namespace Speak
                 Console.WriteLine("Stream1");
                 byte[] buffer = tts.SpeakToMemory(message);
                 tts.Sync();
+                binaryWriter.Write((int)buffer.Length/2); // buffer.Length/2 num samples
+
                 for (int i = 0; i < buffer.Length - 1; i += 2)
                 {
-                    float sample = (float)BitConverter.ToInt16(buffer, i);
+                    ushort sample = BitConverter.ToUInt16(buffer, i);
                     binaryWriter.Write(sample);
                 }
                 Console.WriteLine("Stream2");
-                binaryWriter.Write(-2.69f); // shouldnt occur in 16 bit pcm audio??? so we use as terminator
-                Console.WriteLine(-2.69f);
                 binaryWriter.Flush();
                 Console.WriteLine("Stream4");
             }

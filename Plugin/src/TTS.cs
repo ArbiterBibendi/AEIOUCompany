@@ -57,7 +57,7 @@ public static class TTS
         if (!_initialized)
         {
             Plugin.LogError("Tried to speak before initializing TTS!");
-            return default(float[]);;
+            return default(float[]);
         }
         try
         {
@@ -70,17 +70,12 @@ public static class TTS
             _streamWriter.WriteLine($"msg={message}]"); // ] to close off any accidentally opened talk commands
             _streamWriter.Flush();
             float[] floatBuffer = new float[IN_BUFFER_SIZE];
-            float nextFloat = 0f;
-            int i = 0;
-            while (nextFloat != -2.69f) //0xdeadbeef is pcm terminator defined in SpeakServer.Program
+            int msgLength = _binaryReader.ReadInt32();
+            for (int i = 0; i < msgLength; i++)
             {
-                floatBuffer[i] = (float)0x00000000;
-                nextFloat = _binaryReader.ReadSingle();
-                if (nextFloat != -2.69f)
-                {
-                    floatBuffer[i] = nextFloat;
-                }
-                i++;
+                byte[] bytes = _binaryReader.ReadBytes(2);
+                float nextSample = (float)BitConverter.ToInt16(bytes, 0) / 32767f; // convert half to single
+                floatBuffer[i] = nextSample;
             }
             Plugin.Log($"END");
             return floatBuffer;

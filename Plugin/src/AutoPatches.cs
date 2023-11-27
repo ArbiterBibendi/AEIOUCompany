@@ -54,15 +54,22 @@ public class AutoPatches
         }
         
         float[] samples = TTS.SpeakToMemory(chatMessage);
-        audioSource.clip = AudioClip.Create("AEIOUCLIP", samples.Length, 1, 11025, false);
-        audioSource.clip.SetData(samples, 0);
+        AudioClip clip = AudioClip.Create("AEIOUCLIP", samples.Length, 1, 11025, false);
+        clip.SetData(samples, 0);
+
         audioSource.outputAudioMixerGroup = SoundManager.Instance.playerVoiceMixers[player.playerClientId];
-        audioSource.volume = SoundManager.Instance.playerVoiceVolumes[player.playerClientId];
+        audioSource.volume = 1f;
         audioSource.dopplerLevel = 0f;
         audioSource.pitch = 1f;
         audioSource.spatialize = true;
-        audioSource.Play();
-        Plugin.Log($"Playing audio: {audioSource.ToString()}");
+
+        audioSource.PlayOneShot(clip, 1f);
+        Plugin.Log
+        (
+            $"Playing audio: {audioSource.ToString()}\n" +
+            $"Playing audio: {audioSource.volume.ToString()}\n" +
+            $"Playing audio: {audioSource.ignoreListenerVolume.ToString()}\n"
+        );
     }
 
     [HarmonyPatch(typeof(HUDManager), "EnableChat_performed")]
