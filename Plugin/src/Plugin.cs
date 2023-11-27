@@ -40,11 +40,10 @@ namespace AEIOU_Company
         }
         public void OnDestroy()
         {
-            //TweaksForTesting();
+            TweaksForTesting();
             TTS.Speak("Starting Up");
+            TTS.SpeakToMemory("monday");
         }
-        
-        
         private void TweaksForTesting()
         {
             LCModUtils modUtils = new LCModUtils(base.Logger, Harmony);

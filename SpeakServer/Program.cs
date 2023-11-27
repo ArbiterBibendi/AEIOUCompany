@@ -28,19 +28,16 @@ namespace Speak
             binaryWriter = new BinaryWriter(namedPipeServerStream, Encoding.UTF8, true);
             tts = new FonixTalkEngine();
 
-            while (!_shouldCloseServer)
-            {
-                namedPipeServerStream.WaitForConnection();
-                Console.WriteLine("Connected");
+            namedPipeServerStream.WaitForConnection();
+            Console.WriteLine("Connected");
 
-                ListenForMessages();
-                
-                if (namedPipeServerStream.IsConnected)
-                {
-                    namedPipeServerStream.Disconnect();
-                }
+            ListenForMessages();
+
+            if (namedPipeServerStream.IsConnected)
+            {
+                namedPipeServerStream.Disconnect();
             }
-            tts.Sync();          
+            tts.Sync();
         }
         static void ListenForMessages()
         {
@@ -82,8 +79,8 @@ namespace Speak
                 string message = line.Substring(MESSAGE_PREFIX.Length);
                 Console.WriteLine("Stream1");
                 byte[] buffer = tts.SpeakToMemory(message);
-                tts.Sync();
-                binaryWriter.Write((int)buffer.Length/2); // buffer.Length/2 num samples
+                //tts.Sync();
+                binaryWriter.Write((int)buffer.Length); // buffer.Length/2 num samples
 
                 for (int i = 0; i < buffer.Length - 1; i += 2)
                 {

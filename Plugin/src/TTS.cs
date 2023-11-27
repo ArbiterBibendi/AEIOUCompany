@@ -4,6 +4,7 @@ using System.IO;
 using System.IO.Pipes;
 using System.Reflection;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace AEIOU_Company;
 public static class TTS
@@ -52,7 +53,7 @@ public static class TTS
             Plugin.LogError("Speak" + e);
         }
     }
-    public static float[] SpeakToMemory(string message)
+    public static async Task<float[]> SpeakToMemory(string message)
     {
         if (!_initialized)
         {
@@ -62,16 +63,19 @@ public static class TTS
 
         SendMsg(message, "msg");
         ClearSamplesBuffer();
-        int msgLength = _binaryReader.ReadInt32();
-        for (int i = 0; i < msgLength; i++)
+        int msgLength = _binaryReader.ReadInt32(); //msg length is number of samples 16 bit
+        byte[] bytes = _binaryReader.ReadBytes(msgLength);
+        Stopwatch watch = Stopwatch.StartNew();
+        for (int i = 0; i < msgLength - 1; i += 2)
         {
-            byte[] bytes = _binaryReader.ReadBytes(2);
-            float nextSample = (float)BitConverter.ToInt16(bytes, 0) / 32767f; // convert half to single
+            int floatBufferIndex = i/2;
+            float nextSample = (float)BitConverter.ToInt16(bytes, i) / 32767f; // convert half -1 to 1 float
             if (i < floatBuffer.Length) // if audio clip is larger than buffer, we still want to consume every byte on the stream
             {
-                floatBuffer[i] = nextSample;
+                floatBuffer[floatBufferIndex] = nextSample;
             }
         }
+        Plugin.Log($"Elapsed time {watch.ElapsedMilliseconds}");
         Plugin.Log($"END");
         return floatBuffer;
     }
@@ -96,7 +100,7 @@ public static class TTS
                 Plugin.LogError(e);
             }
         }
-        catch(Exception e)
+        catch (Exception e)
         {
             Plugin.LogError(e);
         }
@@ -115,7 +119,7 @@ public static class TTS
         {
             Plugin.LogError("Unable to connect to SpeakServer after timeout");
         }
-        catch(IOException)
+        catch (IOException)
         {
             Plugin.LogError("IOException while trying to ConnectToSpeakServer");
         }
