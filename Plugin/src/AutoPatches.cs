@@ -16,6 +16,7 @@ public class AutoPatches
 {
     private static readonly int NEW_CHAT_SIZE = 8000;
     private static TMP_InputField chatTextField = null;
+    private static AudioClip audioClip = null;
     [HarmonyPatch(typeof(HUDManager), "AddChatMessage")]
     [HarmonyPrefix]
     public static void AddChatMessagePostfix(HUDManager __instance, string chatMessage, string nameOfUserWhoTyped)
@@ -55,17 +56,22 @@ public class AutoPatches
         }
         
         float[] samples = TTS.SpeakToMemory(chatMessage);
-        AudioClip clip = AudioClip.Create("AEIOUCLIP", samples.Length, 1, 11025, false);
-        clip.SetData(samples, 0);
+        if (audioClip == null)
+        {
+            audioClip = AudioClip.Create("AEIOUCLIP", samples.Length, 1, 11025, false);
+        }
+        audioSource.clip = audioClip;
+        audioSource.clip.SetData(samples, 0);
 
         audioSource.outputAudioMixerGroup = SoundManager.Instance.playerVoiceMixers[player.playerClientId];
-        audioSource.volume = 1f;
+        audioSource.volume = 1.7f;
         audioSource.dopplerLevel = 0f;
         audioSource.pitch = 1f;
         audioSource.spatialize = true;
         audioSource.spatialBlend = 1f;
+        audioSource.Stop();
 
-        audioSource.PlayOneShot(clip, 1f);
+        audioSource.Play();
         Plugin.Log
         (
             $"Playing audio: {audioSource.ToString()}\n" +
