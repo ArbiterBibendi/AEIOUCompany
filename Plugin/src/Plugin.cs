@@ -40,9 +40,8 @@ namespace AEIOU_Company
         }
         public void OnDestroy()
         {
-            TweaksForTesting();
+            //TweaksForTesting();
             TTS.Speak("Starting Up");
-            TTS.SpeakToMemory("drake");
         }
         
         

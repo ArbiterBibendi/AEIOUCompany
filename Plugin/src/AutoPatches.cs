@@ -44,6 +44,7 @@ public class AutoPatches
         {
             AEIOUSpeakObject = new GameObject("AEIOUSpeakObject");
             AEIOUSpeakObject.transform.parent = player.transform;
+            AEIOUSpeakObject.transform.localPosition = Vector3.zero;
             AEIOUSpeakObject.AddComponent<AudioSource>();
         }
         AudioSource audioSource = AEIOUSpeakObject.GetComponent<AudioSource>();
@@ -62,6 +63,7 @@ public class AutoPatches
         audioSource.dopplerLevel = 0f;
         audioSource.pitch = 1f;
         audioSource.spatialize = true;
+        audioSource.spatialBlend = 1f;
 
         audioSource.PlayOneShot(clip, 1f);
         Plugin.Log
@@ -79,13 +81,6 @@ public class AutoPatches
         ___chatTextField.characterLimit = NEW_CHAT_SIZE;
         chatTextField = ___chatTextField;
     }
-    [HarmonyPatch(typeof(HUDManager), "SubmitChat_performed")]
-    [HarmonyPrefix]
-    public static void SubmitChat_performedPrefix()
-    {
-        Plugin.Log($"SubmitChat_performed: {chatTextField.text.Length}");
-    }
-
 
     [HarmonyPatch(typeof(HUDManager), "SubmitChat_performed")]
     [HarmonyTranspiler]
@@ -110,7 +105,7 @@ public class AutoPatches
                 {
                     instructionToChange.opcode = OpCodes.Ldc_I4;
                     instructionToChange.operand = NEW_CHAT_SIZE; // new max chat length
-                    Plugin.Log("Patched max chat size");
+                    Plugin.Log("Patched max chat length");
                     break;
                 }
                 else if (foundFirstInstruction) // if current instruction is not what we expected, reset
@@ -118,6 +113,24 @@ public class AutoPatches
                     foundFirstInstruction = false;
                     instructionToChange = null;
                 }
+            }
+        }
+        return newInstructions.AsEnumerable();
+    }
+
+    [HarmonyPatch(typeof(HUDManager), "AddPlayerChatMessageServerRpc")]
+    [HarmonyTranspiler]
+    private static IEnumerable<CodeInstruction> AddPlayerChatMessageServerRpcTranspiler(IEnumerable<CodeInstruction> oldInstructions)
+    {
+        List<CodeInstruction> newInstructions = new List<CodeInstruction>(oldInstructions);
+        foreach (CodeInstruction instruction in newInstructions)
+        {
+            if (instruction.Is(OpCodes.Ldc_I4_S, 0x32))
+            {
+                instruction.opcode = OpCodes.Ldc_I4;
+                instruction.operand = NEW_CHAT_SIZE;
+                Plugin.Log("Patched server max chat length");
+                break;
             }
         }
         return newInstructions.AsEnumerable();
