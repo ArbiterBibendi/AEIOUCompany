@@ -77,19 +77,10 @@ namespace Speak
             {
                 Console.WriteLine("Stream");
                 string message = line.Substring(MESSAGE_PREFIX.Length);
-                Console.WriteLine("Stream1");
                 byte[] buffer = tts.SpeakToMemory(message);
-                //tts.Sync();
                 binaryWriter.Write((int)buffer.Length); // buffer.Length/2 num samples
-
-                for (int i = 0; i < buffer.Length - 1; i += 2)
-                {
-                    ushort sample = BitConverter.ToUInt16(buffer, i);
-                    binaryWriter.Write(sample);
-                }
-                Console.WriteLine("Stream2");
+                namedPipeServerStream.Write(buffer, 0, buffer.Length);
                 binaryWriter.Flush();
-                Console.WriteLine("Stream4");
             }
             else if (line.StartsWith(MESSAGE_ALOUD_PREFIX, StringComparison.Ordinal))
             {

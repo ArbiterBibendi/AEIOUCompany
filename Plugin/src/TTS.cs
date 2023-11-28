@@ -63,9 +63,10 @@ public static class TTS
 
         SendMsg(message, "msg");
         ClearSamplesBuffer();
+        Stopwatch watch = Stopwatch.StartNew();
         int msgLength = _binaryReader.ReadInt32(); //msg length is number of samples 16 bit
         byte[] bytes = _binaryReader.ReadBytes(msgLength);
-        Stopwatch watch = Stopwatch.StartNew();
+        Plugin.Log($"Elapsed time {watch.ElapsedMilliseconds}");
         for (int i = 0; i < msgLength - 1; i += 2)
         {
             int floatBufferIndex = i/2;
@@ -75,7 +76,6 @@ public static class TTS
                 floatBuffer[floatBufferIndex] = nextSample;
             }
         }
-        Plugin.Log($"Elapsed time {watch.ElapsedMilliseconds}");
         Plugin.Log($"END");
         return floatBuffer;
     }

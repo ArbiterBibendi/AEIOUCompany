@@ -38,11 +38,10 @@ namespace AEIOU_Company
             Harmony.PatchAll();
             base.Logger.LogInfo($"Plugin total patches appled: {Harmony.GetPatchedMethods().Count()}");
         }
-        public void OnDestroy()
+        public async void OnDestroy()
         {
-            TweaksForTesting();
+            //TweaksForTesting();
             TTS.Speak("Starting Up");
-            TTS.SpeakToMemory("monday");
         }
         private void TweaksForTesting()
         {
