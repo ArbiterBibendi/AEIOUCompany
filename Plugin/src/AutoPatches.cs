@@ -16,11 +16,10 @@ public class AutoPatches
 {
     private static readonly int NEW_CHAT_SIZE = 8000;
     private static TMP_InputField chatTextField = null;
-    private static AudioClip audioClip = null;
     private static string lastChatMessage = "";
     [HarmonyPatch(typeof(HUDManager), "AddPlayerChatMessageClientRpc")]
     [HarmonyPostfix]
-    public static async void AddPlayerChatMessageClientRpcPostfix(HUDManager __instance, string chatMessage, int playerId)
+    public static void AddPlayerChatMessageClientRpcPostfix(HUDManager __instance, string chatMessage, int playerId)
     {
         if (lastChatMessage == chatMessage)
         {
@@ -57,16 +56,20 @@ public class AutoPatches
             return;
         }
 
-        float[] samples = await TTS.SpeakToMemory(chatMessage);
-        if (audioClip == null)
+        float[] samples = TTS.SpeakToMemory(chatMessage, 7.5f);
+        if (audioSource.clip == null)
         {
-            audioClip = AudioClip.Create("AEIOUCLIP", samples.Length, 1, 11025, false);
+            audioSource.clip = AudioClip.Create("AEIOUCLIP", samples.Length, 1, 11025, false);
         }
-        //audioSource.clip = audioClip;
-        audioClip.SetData(samples, 0);
+        audioSource.clip.SetData(samples, 0);
 
         audioSource.outputAudioMixerGroup = SoundManager.Instance.playerVoiceMixers[player.playerClientId];
         audioSource.volume = 1f;
+        if (Vector3.Distance(player.transform.position, __instance.localPlayer.transform.position) > 50f)
+        {
+            audioSource.volume = 0f;
+        }
+        audioSource.rolloffMode = AudioRolloffMode.Logarithmic;
         audioSource.dopplerLevel = 0f;
         audioSource.pitch = 1f;
         audioSource.spatialize = true;
@@ -76,7 +79,7 @@ public class AutoPatches
             audioSource.Stop(true);
         }
 
-        audioSource.PlayOneShot(audioClip, 1f);
+        audioSource.PlayOneShot(audioSource.clip, 1f);
         Plugin.Log
         (
             $"Playing audio: {audioSource.ToString()}\n" +
@@ -143,37 +146,6 @@ public class AutoPatches
                 Plugin.Log("Patched server max chat length");
                 break;
             }
-        }
-        return newInstructions.AsEnumerable();
-    }
-    [HarmonyPatch(typeof(HUDManager), "EnableChat_performed")]
-    [HarmonyTranspiler]
-    private static IEnumerable<CodeInstruction> EnableChat_performedTranspiler(IEnumerable<CodeInstruction> oldInstructions)
-    {
-        List<CodeInstruction> newInstructions = new List<CodeInstruction>(oldInstructions);
-        for (int i = 0; i < newInstructions.Count - 3; i++)
-        {
-            if (!(newInstructions[i].opcode == OpCodes.Ldarg_0))
-            {
-                continue;
-            }
-            if (!newInstructions[i + 1].Is(OpCodes.Ldfld, AccessTools.Field(typeof(HUDManager), "localPlayer")))
-            {
-                continue;
-            }
-            if (!newInstructions[i + 2].Is(OpCodes.Ldfld, AccessTools.Field(typeof(PlayerControllerB), "isPlayerDead")))
-            {
-                continue;
-            }
-            if (!(newInstructions[i + 3].opcode == OpCodes.Brfalse))
-            {
-                Plugin.Log($"{newInstructions[i + 3].opcode} {newInstructions[i + 3].operand}");
-                continue;
-            }
-            Plugin.Log("Patching dead chat");
-            newInstructions[i].opcode = OpCodes.Br;
-            newInstructions[i].operand = newInstructions[i + 3].operand;
-            newInstructions.RemoveRange(i + 1, 3);
         }
         return newInstructions.AsEnumerable();
     }

@@ -53,7 +53,7 @@ public static class TTS
             Plugin.LogError("Speak" + e);
         }
     }
-    public static async Task<float[]> SpeakToMemory(string message)
+    public static float[] SpeakToMemory(string message, float volumeScale = 1f)
     {
         if (!_initialized)
         {
@@ -70,7 +70,7 @@ public static class TTS
         for (int i = 0; i < msgLength - 1; i += 2)
         {
             int floatBufferIndex = i/2;
-            float nextSample = (float)BitConverter.ToInt16(bytes, i) / 32767f; // convert half -1 to 1 float
+            float nextSample = volumeScale * ((float)BitConverter.ToInt16(bytes, i) / 32767f); // convert half -1 to 1 float
             if (i < floatBuffer.Length) // if audio clip is larger than buffer, we still want to consume every byte on the stream
             {
                 floatBuffer[floatBufferIndex] = nextSample;

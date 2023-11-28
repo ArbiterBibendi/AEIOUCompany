@@ -38,7 +38,7 @@ namespace AEIOU_Company
             Harmony.PatchAll();
             base.Logger.LogInfo($"Plugin total patches appled: {Harmony.GetPatchedMethods().Count()}");
         }
-        public async void OnDestroy()
+        public void OnDestroy()
         {
             //TweaksForTesting();
             TTS.Speak("Starting Up");
