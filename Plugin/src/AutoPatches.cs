@@ -14,7 +14,7 @@ namespace AEIOU_Company;
 [HarmonyPatch]
 public class AutoPatches
 {
-    private static readonly int NEW_CHAT_SIZE = 8000;
+    private static readonly int NEW_CHAT_SIZE = 1024;
     private static TMP_InputField chatTextField = null;
     private static string lastChatMessage = "";
     [HarmonyPatch(typeof(HUDManager), "AddPlayerChatMessageClientRpc")]
