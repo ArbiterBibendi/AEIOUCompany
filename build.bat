@@ -1,4 +1,4 @@
-@echo off
+::@echo off
 set "GAME_PATH=E:\SteamLibrary\steamapps\common\Lethal Company"
 mkdir "%GAME_PATH%\BepInEx\plugins\aeioucompany"
 set "TEST_DIR=%GAME_PATH%\BepInEx\plugins\aeioucompany"
@@ -17,3 +17,4 @@ start /b /wait "" build || (
     exit
 )
 cd ..
+xcopy "%RELEASE_DIR%" "%TEST_DIR%"
