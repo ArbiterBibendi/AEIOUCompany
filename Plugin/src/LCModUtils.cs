@@ -14,6 +14,8 @@ namespace AEIOU_Company;
 public class LCModUtils
 {
     private static Harmony _harmony = null;
+    private static bool _shouldHost = false;
+    private static bool _shouldJoin = false;
     public LCModUtils(Harmony harmony)
     {
         _harmony = harmony;
@@ -35,28 +37,65 @@ public class LCModUtils
         SceneManager.sceneLoaded += OnSceneLoaded; // listen for main menu load, destroy lan warning
         UnityEngine.SceneManagement.SceneManager.LoadScene("InitSceneLANMode");
     }
+    public void StartLANHost()
+    {
+        BootToLANMenu();
+        _shouldHost = true;
+    }
+    public void StartLANClient()
+    {
+        BootToLANMenu();
+        _shouldJoin = true;
+    }
 
-    
+
+
     private static bool SetFullScreenModePrefix()
     {
         return false;
     }
-    
     private static void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
+        MenuManager menuManager = UnityEngine.GameObject.FindObjectOfType<MenuManager>();
         if (scene.name == "MainMenu")
         {
             Plugin.Log("MainMenuLoaded");
-            GameObject LANWarning = GameObject.FindAnyObjectByType<MenuManager>().lanWarningContainer;
+            GameObject LANWarning = menuManager.lanWarningContainer;
             if (LANWarning)
             {
                 Plugin.Log("Destroy LAN Warning");
-                LANWarning.SetActive(false);
+                UnityEngine.GameObject.Destroy(LANWarning);
             }
             else
             {
                 Plugin.Log("LANWarning Null");
             }
+
+            if (_shouldHost || _shouldJoin)
+            {
+                MethodInfo startMethodInfo = AccessTools.Method(typeof(MenuManager), "Start");
+                if (startMethodInfo == null)
+                {
+                    Plugin.LogError("Couldn't find method \"Start\" in MenuManager");
+                }
+                MethodInfo postfix = SymbolExtensions.GetMethodInfo(() => HostOrJoin());
+                _harmony.Patch(startMethodInfo, postfix: new HarmonyMethod(postfix));
+            }
+            SceneManager.sceneLoaded -= OnSceneLoaded;
+        }
+    }
+    private static void HostOrJoin()
+    {
+        MenuManager menuManager = UnityEngine.GameObject.FindObjectOfType<MenuManager>();
+        if (_shouldHost)
+        {
+            menuManager?.ClickHostButton();
+            menuManager?.ConfirmHostButton();
+        }
+        else if (_shouldJoin)
+        {
+            MethodInfo ClickJoinButton = AccessTools.Method(typeof(MenuManager), "ClickJoinButton");
+            ClickJoinButton?.Invoke(menuManager, null);
         }
     }
 }

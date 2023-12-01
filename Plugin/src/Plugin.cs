@@ -40,7 +40,14 @@ namespace AEIOU_Company
         }
         public void OnDestroy()
         {
+            EnableTestMode();
             TTS.Speak("Starting Up");
+        }
+        private void EnableTestMode()
+        {
+            LCModUtils modUtils = new LCModUtils(Harmony);
+            modUtils.DisableFullscreen();
+            modUtils.StartLANClient();
         }
     }
 }
