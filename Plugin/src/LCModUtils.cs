@@ -13,11 +13,9 @@ using UnityEngine.UIElements;
 namespace AEIOU_Company;
 public class LCModUtils
 {
-    private static ManualLogSource _logger = null;
     private static Harmony _harmony = null;
-    public LCModUtils(ManualLogSource logger, Harmony harmony)
+    public LCModUtils(Harmony harmony)
     {
-        _logger = logger;
         _harmony = harmony;
     }
     public void DisableFullscreen()
@@ -25,15 +23,15 @@ public class LCModUtils
         MethodInfo SetFullscreenMode = AccessTools.Method(typeof(IngamePlayerSettings), "SetFullscreenMode");
         if (SetFullscreenMode == null)
         {
-            _logger.LogError($"Couldn't find method {nameof(SetFullscreenMode)}");
+            Plugin.LogError($"Couldn't find method {nameof(SetFullscreenMode)}");
         }
         MethodInfo SetFullScreenModePrefixInfo = SymbolExtensions.GetMethodInfo(() => SetFullScreenModePrefix());
         _harmony.Patch(SetFullscreenMode, prefix: new HarmonyMethod(SetFullScreenModePrefixInfo));
-        _logger.LogInfo("Disabled Fullscreen");
+        Plugin.Log("Disabled Fullscreen");
     }
     public void BootToLANMenu()
     {
-        _logger.LogInfo("Attempting to load lan scene");
+        Plugin.Log("Attempting to load lan scene");
         SceneManager.sceneLoaded += OnSceneLoaded; // listen for main menu load, destroy lan warning
         UnityEngine.SceneManagement.SceneManager.LoadScene("InitSceneLANMode");
     }
@@ -48,16 +46,16 @@ public class LCModUtils
     {
         if (scene.name == "MainMenu")
         {
-            _logger.LogInfo("MainMenuLoaded");
+            Plugin.Log("MainMenuLoaded");
             GameObject LANWarning = GameObject.FindAnyObjectByType<MenuManager>().lanWarningContainer;
             if (LANWarning)
             {
-                _logger.LogInfo("Destroy LAN Warning");
-                GameObject.Destroy(LANWarning);
+                Plugin.Log("Destroy LAN Warning");
+                LANWarning.SetActive(false);
             }
             else
             {
-                _logger.LogInfo("LANWarning Null");
+                Plugin.Log("LANWarning Null");
             }
         }
     }

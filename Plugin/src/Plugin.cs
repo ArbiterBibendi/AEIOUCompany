@@ -16,7 +16,7 @@ namespace AEIOU_Company
     [BepInPlugin(PluginInfo.PLUGIN_GUID, PluginInfo.PLUGIN_NAME, PluginInfo.PLUGIN_VERSION)]
     public class Plugin : BaseUnityPlugin
     {
-        public Harmony Harmony = null;
+        public static Harmony Harmony = null;
         protected static new ManualLogSource Logger = null;
         public static void Log(object data)
         {
@@ -40,14 +40,7 @@ namespace AEIOU_Company
         }
         public void OnDestroy()
         {
-            //TweaksForTesting();
             TTS.Speak("Starting Up");
-        }
-        private void TweaksForTesting()
-        {
-            LCModUtils modUtils = new LCModUtils(base.Logger, Harmony);
-            modUtils.DisableFullscreen();
-            modUtils.BootToLANMenu();
         }
     }
 }
