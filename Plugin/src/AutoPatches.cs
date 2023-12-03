@@ -6,6 +6,7 @@ using System.Linq;
 using TMPro;
 using UnityEngine;
 using Dissonance.Integrations.Unity_NFGO;
+using System.Collections;
 
 
 
@@ -47,7 +48,7 @@ public class AutoPatches
             AEIOUSpeakObject = new GameObject("AEIOUSpeakObject");
             AEIOUSpeakObject.transform.parent = player.transform;
             AEIOUSpeakObject.transform.localPosition = Vector3.zero;
-            AEIOUSpeakObject.AddComponent<AudioSource>();
+            AudioSource source = AEIOUSpeakObject.AddComponent<AudioSource>();
         }
         AudioSource audioSource = AEIOUSpeakObject.GetComponent<AudioSource>();
         if (audioSource == null)
@@ -64,13 +65,13 @@ public class AutoPatches
         audioSource.clip.SetData(samples, 0);
 
         audioSource.outputAudioMixerGroup = SoundManager.Instance.playerVoiceMixers[player.playerClientId];
-        audioSource.volume = 1f;
+        audioSource.volume = Plugin.TTSVolume;
         if (Vector3.Distance(player.transform.position, __instance.localPlayer.transform.position) > 50f)
         {
             audioSource.volume = 0f;
         }
         audioSource.rolloffMode = AudioRolloffMode.Logarithmic;
-        audioSource.dopplerLevel = 0f;
+        audioSource.dopplerLevel = Plugin.TTSDopperLevel;
         audioSource.pitch = 1f;
         audioSource.spatialize = true;
         audioSource.spatialBlend = 1f;
@@ -79,13 +80,38 @@ public class AutoPatches
             audioSource.Stop(true);
         }
 
-        audioSource.PlayOneShot(audioSource.clip, 1f);
         Plugin.Log
         (
             $"Playing audio: {audioSource.ToString()}\n" +
             $"Playing audio: {audioSource.volume.ToString()}\n" +
-            $"Playing audio: {audioSource.ignoreListenerVolume.ToString()}\n"
+            $"Playing audio: {audioSource.ignoreListenerVolume.ToString()}\n" +
+            $"Playing audio: {audioSource.clip.ToString()}\n"
         );
+        if (player.holdingWalkieTalkie)
+        {
+            Plugin.Log("WalkieTalkie");
+            WalkieTalkie walkieTalkie = (WalkieTalkie)player.currentlyHeldObjectServer;
+            if (walkieTalkie == null || !walkieTalkie.isBeingUsed)
+            {
+                return;
+            }
+            audioSource.spatialBlend = 0f;
+            audioSource.volume = Plugin.TTSVolume;
+            if (player.IsLocalPlayer)
+            {
+                Plugin.Log("Pushing walkie button");
+                player.playerBodyAnimator.SetBool("walkieTalkie", true);
+            }
+            walkieTalkie.StartCoroutine(WaitAndStopUsingWalkieTalkie(audioSource.clip, player));
+        }
+        audioSource.PlayOneShot(audioSource.clip, 1f);
+    }
+    public static IEnumerator WaitAndStopUsingWalkieTalkie(AudioClip clip, PlayerControllerB player)
+    {
+        Plugin.Log($"WalkieButton Length {clip.length}");
+        yield return new WaitForSeconds(clip.length);
+        Plugin.Log($"WalkieButton end");
+        player.playerBodyAnimator.SetBool("walkieTalkie", false);
     }
 
     [HarmonyPatch(typeof(HUDManager), "EnableChat_performed")]
