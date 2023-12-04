@@ -49,7 +49,7 @@ public class AutoPatches
             AEIOUSpeakObject = new GameObject("AEIOUSpeakObject");
             AEIOUSpeakObject.transform.parent = player.transform;
             AEIOUSpeakObject.transform.localPosition = Vector3.zero;
-            AudioSource source = AEIOUSpeakObject.AddComponent<AudioSource>();
+            AEIOUSpeakObject.AddComponent<AudioSource>();
             AEIOUSpeakObject.AddComponent<AudioHighPassFilter>();
             AEIOUSpeakObject.AddComponent<AudioLowPassFilter>();
         }
@@ -59,18 +59,18 @@ public class AutoPatches
             Plugin.LogError($"Couldn't speak, AudioSource was null");
             return;
         }
-
         float[] samples = TTS.SpeakToMemory(chatMessage, 7.5f);
         if (audioSource.clip == null)
         {
             audioSource.clip = AudioClip.Create("AEIOUCLIP", TTS.IN_BUFFER_SIZE, 1, 11025, false);
         }
+
         audioSource.clip.SetData(emptySamples, 0);
         audioSource.clip.SetData(samples, 0);
 
         audioSource.outputAudioMixerGroup = SoundManager.Instance.playerVoiceMixers[player.playerClientId];
         audioSource.volume = Plugin.TTSVolume;
-        if (Vector3.Distance(player.transform.position, __instance.localPlayer.transform.position) > 50f)
+        if (Vector3.Distance(player.transform.position, StartOfRound.Instance.localPlayerController.transform.position) > 50f)
         {
             audioSource.volume = 0f;
         }
@@ -83,7 +83,6 @@ public class AutoPatches
         AudioHighPassFilter highPassFilter = AEIOUSpeakObject.GetComponent<AudioHighPassFilter>();
         if (highPassFilter != null)
         {
-            Plugin.Log("AudioHighPassFilter not null!");
             highPassFilter.enabled = false;
         }
 
