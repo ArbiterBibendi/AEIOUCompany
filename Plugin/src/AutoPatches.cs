@@ -50,6 +50,8 @@ public class AutoPatches
             AEIOUSpeakObject.transform.parent = player.transform;
             AEIOUSpeakObject.transform.localPosition = Vector3.zero;
             AudioSource source = AEIOUSpeakObject.AddComponent<AudioSource>();
+            AEIOUSpeakObject.AddComponent<AudioHighPassFilter>();
+            AEIOUSpeakObject.AddComponent<AudioLowPassFilter>();
         }
         AudioSource audioSource = AEIOUSpeakObject.GetComponent<AudioSource>();
         if (audioSource == null)
@@ -77,6 +79,21 @@ public class AutoPatches
         audioSource.pitch = 1f;
         audioSource.spatialize = true;
         audioSource.spatialBlend = 1f;
+
+        AudioHighPassFilter highPassFilter = AEIOUSpeakObject.GetComponent<AudioHighPassFilter>();
+        if (highPassFilter != null)
+        {
+            Plugin.Log("AudioHighPassFilter not null!");
+            highPassFilter.enabled = false;
+        }
+
+        AudioLowPassFilter lowPassFilter = AEIOUSpeakObject.GetComponent<AudioLowPassFilter>();
+        if (lowPassFilter != null)
+        {
+            Plugin.Log("AudioLowPassFilter not null!");
+            lowPassFilter.lowpassResonanceQ = 1;
+        }
+
         if (audioSource.isPlaying)
         {
             audioSource.Stop(true);
@@ -97,13 +114,18 @@ public class AutoPatches
             {
                 return;
             }
-            audioSource.spatialBlend = 0f;
             audioSource.volume = Plugin.TTSVolume;
             if (player == StartOfRound.Instance.localPlayerController)
             {
                 Plugin.Log("Pushing walkie button");
                 player.playerBodyAnimator.SetBool("walkieTalkie", true);
                 walkieTalkie.StartCoroutine(WaitAndStopUsingWalkieTalkie(audioSource.clip, player));
+            }
+            else
+            {
+                highPassFilter.enabled = true;
+                lowPassFilter.lowpassResonanceQ = 3000;
+                audioSource.spatialBlend = 0f;
             }
         }
         audioSource.PlayOneShot(audioSource.clip, 1f);
