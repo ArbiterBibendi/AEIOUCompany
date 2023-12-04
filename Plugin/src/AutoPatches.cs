@@ -110,12 +110,23 @@ public class AutoPatches
         {
             Plugin.Log("WalkieTalkie");
             WalkieTalkie walkieTalkie = (WalkieTalkie)player.currentlyHeldObjectServer;
+            bool localPlayerIsUsingWalkieTalkie = false;
+            for (int i = 0; i < WalkieTalkie.allWalkieTalkies.Count; i++)
+            {
+                if 
+                (
+                    WalkieTalkie.allWalkieTalkies[i].playerHeldBy == StartOfRound.Instance.localPlayerController
+                    && WalkieTalkie.allWalkieTalkies[i].isBeingUsed
+                )
+                {
+                    localPlayerIsUsingWalkieTalkie = true;
+                }
+            }
             if
             (
                 walkieTalkie != null
                 && walkieTalkie.isBeingUsed
-                && StartOfRound.Instance.localPlayerController.holdingWalkieTalkie
-                && player.currentlyHeldObjectServer.isBeingUsed
+                && localPlayerIsUsingWalkieTalkie
             )
             {
                 audioSource.volume = Plugin.TTSVolume;
