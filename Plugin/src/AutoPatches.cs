@@ -91,6 +91,7 @@ public class AutoPatches
         {
             Plugin.Log("AudioLowPassFilter not null!");
             lowPassFilter.lowpassResonanceQ = 1;
+            lowPassFilter.cutoffFrequency = 5000;
         }
 
         if (audioSource.isPlaying)
@@ -127,7 +128,8 @@ public class AutoPatches
                 else
                 {
                     highPassFilter.enabled = true;
-                    lowPassFilter.lowpassResonanceQ = 3000;
+                    lowPassFilter.lowpassResonanceQ = 3f;
+                    lowPassFilter.cutoffFrequency = 4000;
                     audioSource.spatialBlend = 0f;
                 }
             }
