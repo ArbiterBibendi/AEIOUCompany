@@ -2,6 +2,7 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Pipes;
+using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
@@ -11,6 +12,7 @@ public static class TTS
 {
     static readonly int OUT_BUFFER_SIZE = 8192; // text
     public static readonly int IN_BUFFER_SIZE = 8388608; // 8MB pcm audio
+    public static float CurrentAudioLengthInSeconds = 0.0f;
     static float[] floatBuffer = new float[IN_BUFFER_SIZE];
     private static NamedPipeClientStream _namedPipeClientStream;
     private static StreamWriter _streamWriter;
@@ -67,13 +69,24 @@ public static class TTS
         byte[] bytes = _binaryReader.ReadBytes(msgLength);
         for (int i = 0; i < msgLength - 1; i += 2)
         {
-            int floatBufferIndex = i/2;
+            int floatBufferIndex = i / 2;
             float nextSample = volumeScale * ((float)BitConverter.ToInt16(bytes, i) / 32767f); // convert half -1 to 1 float
             if (i < floatBuffer.Length) // if audio clip is larger than buffer, we still want to consume every byte on the stream
             {
                 floatBuffer[floatBufferIndex] = nextSample;
             }
         }
+        int lastNonZeroValueIndex = 0;
+        for (int i = floatBuffer.Length - 1; i > 0; i--)
+        {
+            if (floatBuffer[i] != 0.0)
+            {
+                lastNonZeroValueIndex = i;
+                break;
+            }
+        }
+        CurrentAudioLengthInSeconds = (float)lastNonZeroValueIndex / (float)11025; // 11025 hz
+
         Plugin.Log($"END");
         return floatBuffer;
     }

@@ -18,6 +18,7 @@ public class AutoPatches
     private static readonly int NEW_CHAT_SIZE = 1024;
     private static TMP_InputField chatTextField = null;
     private static string lastChatMessage = "";
+    private static readonly float[] emptySamples = new float[TTS.IN_BUFFER_SIZE];
     [HarmonyPatch(typeof(HUDManager), "AddPlayerChatMessageClientRpc")]
     [HarmonyPostfix]
     public static void AddPlayerChatMessageClientRpcPostfix(HUDManager __instance, string chatMessage, int playerId)
@@ -60,8 +61,9 @@ public class AutoPatches
         float[] samples = TTS.SpeakToMemory(chatMessage, 7.5f);
         if (audioSource.clip == null)
         {
-            audioSource.clip = AudioClip.Create("AEIOUCLIP", samples.Length, 1, 11025, false);
+            audioSource.clip = AudioClip.Create("AEIOUCLIP", TTS.IN_BUFFER_SIZE, 1, 11025, false);
         }
+        audioSource.clip.SetData(emptySamples, 0);
         audioSource.clip.SetData(samples, 0);
 
         audioSource.outputAudioMixerGroup = SoundManager.Instance.playerVoiceMixers[player.playerClientId];
@@ -97,19 +99,19 @@ public class AutoPatches
             }
             audioSource.spatialBlend = 0f;
             audioSource.volume = Plugin.TTSVolume;
-            if (player.IsLocalPlayer)
+            if (player == StartOfRound.Instance.localPlayerController)
             {
                 Plugin.Log("Pushing walkie button");
                 player.playerBodyAnimator.SetBool("walkieTalkie", true);
+                walkieTalkie.StartCoroutine(WaitAndStopUsingWalkieTalkie(audioSource.clip, player));
             }
-            walkieTalkie.StartCoroutine(WaitAndStopUsingWalkieTalkie(audioSource.clip, player));
         }
         audioSource.PlayOneShot(audioSource.clip, 1f);
     }
     public static IEnumerator WaitAndStopUsingWalkieTalkie(AudioClip clip, PlayerControllerB player)
     {
-        Plugin.Log($"WalkieButton Length {clip.length}");
-        yield return new WaitForSeconds(clip.length);
+        Plugin.Log($"WalkieButton Length {TTS.CurrentAudioLengthInSeconds}");
+        yield return new WaitForSeconds(TTS.CurrentAudioLengthInSeconds);
         Plugin.Log($"WalkieButton end");
         player.playerBodyAnimator.SetBool("walkieTalkie", false);
     }
