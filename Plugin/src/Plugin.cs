@@ -48,7 +48,7 @@ namespace AEIOU_Company
         }
         public void OnDestroy()
         {
-            EnableTestMode();
+            //EnableTestMode();
             if (PlayStartingUpMessage)
             {
                 TTS.Speak("Starting Up");

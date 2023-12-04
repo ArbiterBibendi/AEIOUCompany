@@ -111,7 +111,11 @@ public class AutoPatches
             WalkieTalkie walkieTalkie = (WalkieTalkie)player.currentlyHeldObjectServer;
             if (walkieTalkie == null || !walkieTalkie.isBeingUsed)
             {
-                return;
+                return; // if they arent using walkie talkie
+            }
+            if (!StartOfRound.Instance.localPlayerController.holdingWalkieTalkie || !player.currentlyHeldObjectServer.isBeingUsed)
+            {
+                return; // if we arent using walkie talkie
             }
             audioSource.volume = Plugin.TTSVolume;
             if (player == StartOfRound.Instance.localPlayerController)
