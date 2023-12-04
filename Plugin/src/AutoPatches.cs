@@ -109,26 +109,27 @@ public class AutoPatches
         {
             Plugin.Log("WalkieTalkie");
             WalkieTalkie walkieTalkie = (WalkieTalkie)player.currentlyHeldObjectServer;
-            if (walkieTalkie == null || !walkieTalkie.isBeingUsed)
+            if
+            (
+                walkieTalkie != null
+                && walkieTalkie.isBeingUsed
+                && StartOfRound.Instance.localPlayerController.holdingWalkieTalkie
+                && player.currentlyHeldObjectServer.isBeingUsed
+            )
             {
-                return; // if they arent using walkie talkie
-            }
-            if (!StartOfRound.Instance.localPlayerController.holdingWalkieTalkie || !player.currentlyHeldObjectServer.isBeingUsed)
-            {
-                return; // if we arent using walkie talkie
-            }
-            audioSource.volume = Plugin.TTSVolume;
-            if (player == StartOfRound.Instance.localPlayerController)
-            {
-                Plugin.Log("Pushing walkie button");
-                player.playerBodyAnimator.SetBool("walkieTalkie", true);
-                walkieTalkie.StartCoroutine(WaitAndStopUsingWalkieTalkie(audioSource.clip, player));
-            }
-            else
-            {
-                highPassFilter.enabled = true;
-                lowPassFilter.lowpassResonanceQ = 3000;
-                audioSource.spatialBlend = 0f;
+                audioSource.volume = Plugin.TTSVolume;
+                if (player == StartOfRound.Instance.localPlayerController)
+                {
+                    Plugin.Log("Pushing walkie button");
+                    player.playerBodyAnimator.SetBool("walkieTalkie", true);
+                    walkieTalkie.StartCoroutine(WaitAndStopUsingWalkieTalkie(audioSource.clip, player));
+                }
+                else
+                {
+                    highPassFilter.enabled = true;
+                    lowPassFilter.lowpassResonanceQ = 3000;
+                    audioSource.spatialBlend = 0f;
+                }
             }
         }
         audioSource.PlayOneShot(audioSource.clip, 1f);
