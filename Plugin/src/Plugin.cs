@@ -18,6 +18,7 @@ namespace AEIOU_Company
     {
         public static Harmony Harmony = null;
         protected static new ManualLogSource Logger = null;
+        public static bool PlayStartingUpMessage = false;
         public static float TTSVolume = 0f;
         public static float TTSDopperLevel;
 
@@ -36,6 +37,7 @@ namespace AEIOU_Company
             Harmony = harmony;
             Logger = base.Logger;
 
+            PlayStartingUpMessage = Config.Bind<bool>("General", "StartingUpMessage", true, "Enables \"starting up\" sound effect.").Value;
             TTSVolume = Config.Bind<float>("General", "Volume", 1f, "Volume scale of text-to-speech-voice. Values range from 0 to 1").Value;
             TTSDopperLevel = Config.Bind<float>("General", "Doppler Effect Level", 1f, "Values range from 0 to 1").Value;
 
@@ -47,7 +49,10 @@ namespace AEIOU_Company
         public void OnDestroy()
         {
             EnableTestMode();
-            TTS.Speak("Starting Up");
+            if (PlayStartingUpMessage)
+            {
+                TTS.Speak("Starting Up");
+            }
         }
         private void EnableTestMode()
         {
