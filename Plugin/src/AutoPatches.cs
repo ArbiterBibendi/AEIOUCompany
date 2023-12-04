@@ -133,6 +133,7 @@ public class AutoPatches
             }
         }
         audioSource.PlayOneShot(audioSource.clip, 1f);
+        RoundManager.Instance.PlayAudibleNoise(AEIOUSpeakObject.transform.position, 25f, 0.7f);
     }
     public static IEnumerator WaitAndStopUsingWalkieTalkie(AudioClip clip, PlayerControllerB player)
     {
