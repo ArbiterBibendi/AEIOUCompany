@@ -106,10 +106,9 @@ public class AutoPatches
             $"Playing audio: {audioSource.ignoreListenerVolume.ToString()}\n" +
             $"Playing audio: {audioSource.clip.ToString()}\n"
         );
-        if (player.holdingWalkieTalkie)
+        if (player.holdingWalkieTalkie && player.currentlyHeldObjectServer is WalkieTalkie walkieTalkie)
         {
             Plugin.Log("WalkieTalkie");
-            WalkieTalkie walkieTalkie = (WalkieTalkie)player.currentlyHeldObjectServer;
             bool localPlayerIsUsingWalkieTalkie = false;
             for (int i = 0; i < WalkieTalkie.allWalkieTalkies.Count; i++)
             {
