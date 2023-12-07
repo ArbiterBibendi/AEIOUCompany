@@ -28,6 +28,7 @@ public class AutoPatches
             return;
         }
         lastChatMessage = chatMessage;
+        
         Plugin.Log($"AddTextToChatOnServer: {chatMessage} {playerId}");
         PlayerControllerB player = null;
         for (int i = 0; i < __instance.playersManager.allPlayerScripts.Length; i++)
@@ -59,7 +60,8 @@ public class AutoPatches
             Plugin.LogError($"Couldn't speak, AudioSource was null");
             return;
         }
-        float[] samples = TTS.SpeakToMemory(chatMessage, 7.5f);
+        string filteredChatMessage = chatMessage.Replace("\r", "").Replace("\n", "");
+        float[] samples = TTS.SpeakToMemory(filteredChatMessage, 7.5f);
         if (audioSource.clip == null)
         {
             audioSource.clip = AudioClip.Create("AEIOUCLIP", TTS.IN_BUFFER_SIZE, 1, 11025, false);
