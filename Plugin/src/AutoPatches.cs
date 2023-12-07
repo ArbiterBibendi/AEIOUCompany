@@ -72,11 +72,9 @@ public class AutoPatches
 
         audioSource.outputAudioMixerGroup = SoundManager.Instance.playerVoiceMixers[player.playerClientId];
         audioSource.volume = Plugin.TTSVolume;
-        if (Vector3.Distance(player.transform.position, StartOfRound.Instance.localPlayerController.transform.position) > 50f)
-        {
-            audioSource.volume = 0f;
-        }
-        audioSource.rolloffMode = AudioRolloffMode.Logarithmic;
+        audioSource.rolloffMode = AudioRolloffMode.Custom;
+        audioSource.minDistance = 1f;
+        audioSource.maxDistance = 40f;
         audioSource.dopplerLevel = Plugin.TTSDopperLevel;
         audioSource.pitch = 1f;
         audioSource.spatialize = true;
