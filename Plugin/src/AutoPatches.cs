@@ -159,7 +159,7 @@ public class AutoPatches
     [HarmonyPostfix]
     public static void EnableChat_performedPostfix(ref TMP_InputField ___chatTextField)
     {
-        ___chatTextField.characterLimit = NEW_CHAT_SIZE;
+        ___chatTextField.characterLimit = NEW_CHAT_SIZE - 1;
         chatTextField = ___chatTextField;
     }
 
