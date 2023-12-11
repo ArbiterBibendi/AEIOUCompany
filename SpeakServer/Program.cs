@@ -1,9 +1,6 @@
 ﻿using System;
-using System.ComponentModel;
-using System.Diagnostics;
 using System.IO;
 using System.IO.Pipes;
-using System.Linq.Expressions;
 using System.Text;
 using SharpTalk;
 
@@ -28,6 +25,7 @@ namespace Speak
             binaryWriter = new BinaryWriter(namedPipeServerStream, Encoding.UTF8, true);
             tts = new FonixTalkEngine();
 
+            Console.WriteLine("Waiting for connection");
             namedPipeServerStream.WaitForConnection();
             Console.WriteLine("Connected");
 
