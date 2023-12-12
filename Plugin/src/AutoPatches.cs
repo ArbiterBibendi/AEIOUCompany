@@ -34,6 +34,10 @@ public class Patches
             return;
         }
         lastChatMessage = chatMessage;
+        if (playerId > HUDManager.Instance.playersManager.allPlayerScripts.Length)
+        {
+            return;
+        }
         bool walkieTalkieTextChat = GameNetworkManager.Instance.localPlayerController.holdingWalkieTalkie && StartOfRound.Instance.allPlayerScripts[playerId].holdingWalkieTalkie;
         float distanceToPlayer = Vector3.Distance(GameNetworkManager.Instance.localPlayerController.transform.position, HUDManager.Instance.playersManager.allPlayerScripts[playerId].transform.position);
 		if (distanceToPlayer > 25f && !walkieTalkieTextChat && GameNetworkManager.Instance.localPlayerController.isPlayerDead)

@@ -44,12 +44,13 @@ Place the `aeioucompany` folder into your `BepInEx/plugins` folder
 - My girlfriend and friends for helping me test in early stages
 - and anybody else who supported this mod or helped create anything that it uses
 # Changelog
-## v1.3.0 through v1.3.2
+## v1.3.0 through v1.3.3
 - Enabled dead chat
 - Fixed the stutter when sending a message
 - Added config option for max chat message size
 - Removed debug window
 - Fixed bug with dead chat regarding distance between players
+- Fixed stability when using some other mods
 ## v1.2.0
 - Fixed chatting while holding another object while having a pocketed active walkie talkie
 - Fixed issue where player may not be heard if they are more than 50 meters away when the message is sent
