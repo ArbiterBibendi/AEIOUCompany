@@ -5,7 +5,7 @@
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{FC185343-12C9-4013-BB40-37E9DD5DD49C}</ProjectGuid>
-    <OutputType>Winexe</OutputType>
+    <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Speak</RootNamespace>
     <AssemblyName>AEIOUSpeak</AssemblyName>

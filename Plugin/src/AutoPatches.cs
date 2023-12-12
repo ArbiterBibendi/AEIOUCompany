@@ -8,18 +8,22 @@ using UnityEngine;
 using Dissonance.Integrations.Unity_NFGO;
 using System.Collections;
 using System.Threading.Tasks;
+using System;
 
 
 
 namespace AEIOU_Company;
 
 [HarmonyPatch]
-public class AutoPatches
+public class Patches
 {
     private static int NEW_CHAT_SIZE = Plugin.ChatSize;
     private static TMP_InputField chatTextField = null;
     private static string lastChatMessage = "";
     private static readonly float[] emptySamples = new float[TTS.IN_BUFFER_SIZE];
+    private static List<Speak> _speaks = new List<Speak>();
+    private static bool _isProcessing = false;
+
     [HarmonyPatch(typeof(HUDManager), "AddPlayerChatMessageClientRpc")]
     [HarmonyPostfix]
     public static void AddPlayerChatMessageClientRpcPostfix(HUDManager __instance, string chatMessage, int playerId)
@@ -29,12 +33,28 @@ public class AutoPatches
             return;
         }
         lastChatMessage = chatMessage;
-        
+
         Plugin.Log($"AddTextToChatOnServer: {chatMessage} {playerId}");
-        Task.Run(() => Speak(__instance, chatMessage, playerId));
+        QueueSpeak(__instance, chatMessage, playerId);
+
+        if (_isProcessing)
+        {
+            return;
+        }
+        _isProcessing = true;
+        Task.Run(() =>
+        {
+            while (_speaks.Count > 0)
+            {
+                Speak(__instance, _speaks[0].ChatMessage, _speaks[0].PlayerId);
+                _speaks.RemoveAt(0);
+            }
+            _isProcessing = false;
+        });
     }
     public static void Speak(HUDManager __instance, string chatMessage, int playerId)
     {
+        Plugin.Log("Speak");
         PlayerControllerB player = null;
         for (int i = 0; i < __instance.playersManager.allPlayerScripts.Length; i++)
         {
@@ -76,14 +96,16 @@ public class AutoPatches
         audioSource.clip.SetData(samples, 0);
 
         audioSource.outputAudioMixerGroup = SoundManager.Instance.playerVoiceMixers[player.playerClientId];
-        audioSource.volume = Plugin.TTSVolume;
+
         audioSource.rolloffMode = AudioRolloffMode.Custom;
         audioSource.minDistance = 1f;
         audioSource.maxDistance = 40f;
         audioSource.dopplerLevel = Plugin.TTSDopperLevel;
         audioSource.pitch = 1f;
         audioSource.spatialize = true;
-        audioSource.spatialBlend = 1f;
+        audioSource.spatialBlend = player.isPlayerDead ? 0f : 1f;
+        bool playerHasDeathPermissions = !player.isPlayerDead || StartOfRound.Instance.localPlayerController.isPlayerDead;
+        audioSource.volume = playerHasDeathPermissions ? Plugin.TTSVolume : 0;
 
         AudioHighPassFilter highPassFilter = AEIOUSpeakObject.GetComponent<AudioHighPassFilter>();
         if (highPassFilter != null)
@@ -117,7 +139,7 @@ public class AutoPatches
             bool localPlayerIsUsingWalkieTalkie = false;
             for (int i = 0; i < WalkieTalkie.allWalkieTalkies.Count; i++)
             {
-                if 
+                if
                 (
                     WalkieTalkie.allWalkieTalkies[i].playerHeldBy == StartOfRound.Instance.localPlayerController
                     && WalkieTalkie.allWalkieTalkies[i].isBeingUsed
@@ -152,6 +174,11 @@ public class AutoPatches
         audioSource.PlayOneShot(audioSource.clip, 1f);
         RoundManager.Instance.PlayAudibleNoise(AEIOUSpeakObject.transform.position, 25f, 0.7f);
     }
+    public static void QueueSpeak(HUDManager __instance, string chatMessage, int playerId)
+    {
+        Plugin.Log("Queueing speak");
+        _speaks.Add(new Speak(chatMessage, playerId));
+    }
     public static IEnumerator WaitAndStopUsingWalkieTalkie(AudioClip clip, PlayerControllerB player)
     {
         Plugin.Log($"WalkieButton Length {TTS.CurrentAudioLengthInSeconds}");
@@ -162,10 +189,43 @@ public class AutoPatches
 
     [HarmonyPatch(typeof(HUDManager), "EnableChat_performed")]
     [HarmonyPostfix]
-    public static void EnableChat_performedPostfix(ref TMP_InputField ___chatTextField)
+    public static void EnableChat_performedPostfix(ref TMP_InputField ___chatTextField, HUDManager __instance)
     {
         ___chatTextField.characterLimit = NEW_CHAT_SIZE;
         chatTextField = ___chatTextField;
+        Plugin.Log("Enable Chat");
+    }
+    [HarmonyPatch(typeof(PlayerControllerB), nameof(PlayerControllerB.KillPlayer))]
+    [HarmonyPostfix]
+    public static void KillPlayerPostfix(PlayerControllerB __instance)
+    {
+        HUDManager.Instance.HideHUD(false);
+        HUDManager.Instance.UpdateHealthUI(100, false);
+        Plugin.Log("Player died, re-enabling UI");
+    }
+
+    [HarmonyPatch(typeof(HUDManager), "EnableChat_performed")]
+    [HarmonyTranspiler]
+    public static IEnumerable<CodeInstruction> EnableChat_performedTranspiler(IEnumerable<CodeInstruction> oldInstructions)
+    {
+        List<CodeInstruction> newInstructions = new List<CodeInstruction>(oldInstructions);
+        for (int i = 0; i < newInstructions.Count - 3; i++)
+        {
+            if
+            (
+                newInstructions[i].opcode == OpCodes.Ldarg_0 &&
+                newInstructions[i + 1].Is(OpCodes.Ldfld, AccessTools.Field(typeof(HUDManager), "localPlayer")) &&
+                newInstructions[i + 2].Is(OpCodes.Ldfld, AccessTools.Field(typeof(PlayerControllerB), "isPlayerDead")) &&
+                newInstructions[i + 3].opcode == OpCodes.Brfalse
+            )
+            {
+                Plugin.Log("Patching dead chat in EnableChat_performed");
+                newInstructions[i].opcode = OpCodes.Br;
+                newInstructions[i].operand = newInstructions[i + 3].operand;
+                break;
+            }
+        }
+        return newInstructions.AsEnumerable();
     }
 
     [HarmonyPatch(typeof(HUDManager), "SubmitChat_performed")]
@@ -174,6 +234,7 @@ public class AutoPatches
     {
         List<CodeInstruction> newInstructions = new List<CodeInstruction>(oldInstructions);
         patchMaxChatSize(newInstructions);
+        patchDeadChat(newInstructions);
 
         static void patchMaxChatSize(List<CodeInstruction> newInstructions)
         {
@@ -198,6 +259,25 @@ public class AutoPatches
                 {
                     foundFirstInstruction = false;
                     instructionToChange = null;
+                }
+            }
+        }
+        static void patchDeadChat(List<CodeInstruction> newInstructions)
+        {
+            for (int i = 0; i < newInstructions.Count - 3; i++)
+            {
+                if
+                (
+                    newInstructions[i].opcode == OpCodes.Ldarg_0 &&
+                    newInstructions[i + 1].Is(OpCodes.Ldfld, AccessTools.Field(typeof(HUDManager), "localPlayer")) &&
+                    newInstructions[i + 2].Is(OpCodes.Ldfld, AccessTools.Field(typeof(PlayerControllerB), "isPlayerDead")) &&
+                    newInstructions[i + 3].opcode == OpCodes.Brfalse
+                )
+                {
+                    Plugin.Log("Patching dead chat in SubmitChat_performed");
+                    newInstructions[i].opcode = OpCodes.Br;
+                    newInstructions[i].operand = newInstructions[i + 3].operand;
+                    break;
                 }
             }
         }
