@@ -9,6 +9,7 @@ using Dissonance.Integrations.Unity_NFGO;
 using System.Collections;
 using System.Threading.Tasks;
 using System;
+using System.Reflection;
 
 
 
@@ -33,6 +34,13 @@ public class Patches
             return;
         }
         lastChatMessage = chatMessage;
+        bool walkieTalkieTextChat = GameNetworkManager.Instance.localPlayerController.holdingWalkieTalkie && StartOfRound.Instance.allPlayerScripts[playerId].holdingWalkieTalkie;
+        float distanceToPlayer = Vector3.Distance(GameNetworkManager.Instance.localPlayerController.transform.position, HUDManager.Instance.playersManager.allPlayerScripts[playerId].transform.position);
+		if (distanceToPlayer > 25f && !walkieTalkieTextChat && GameNetworkManager.Instance.localPlayerController.isPlayerDead)
+		{
+			MethodInfo AddChatMessage = (MethodInfo)AccessTools.Method(typeof(HUDManager), "AddChatMessage");
+            AddChatMessage.Invoke(HUDManager.Instance, new object[]{chatMessage, HUDManager.Instance.playersManager.allPlayerScripts[playerId].playerUsername});
+		}
 
         Plugin.Log($"AddTextToChatOnServer: {chatMessage} {playerId}");
         QueueSpeak(__instance, chatMessage, playerId);
