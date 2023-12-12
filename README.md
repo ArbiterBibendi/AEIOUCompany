@@ -23,6 +23,16 @@ For help with singing check out the guides below
 
 - [**Youtube** | Moonbase Alpha provides a realistic simulation of life on a natural satellite](https://www.youtube.com/watch?v=Hv6RbEOlqRo)
 
+
+
+# Feedback / [Discord](https://discord.gg/QPAt6fHExW)
+[AEIOUCompany Discord | Report Bugs, Request Features, Provide Feedback](https://discord.gg/QPAt6fHExW)
+# Features and Known Issues
+- The mod increases the max chat length to 1024 characters (configurable)
+- The mod enables text chat when you are dead
+- [:tone] messages do not work currently
+- Some voice features are currently not available, so some voices may sound a little different than expected.
+
 ## Manual Install Instructions
 Place the `aeioucompany` folder into your `BepInEx/plugins` folder
 
@@ -33,14 +43,13 @@ Place the `aeioucompany` folder into your `BepInEx/plugins` folder
 - All of you guys - For enjoying this and providing feedback
 - My girlfriend and friends for helping me test in early stages
 - and anybody else who supported this mod or helped create anything that it uses
-
-# Feedback / [Discord](https://discord.gg/QPAt6fHExW)
-[AEIOUCompany Discord | Report Bugs, Request Features, Provide Feedback](https://discord.gg/QPAt6fHExW)
-# Notes for users
-- [:tone] messages do not work currently
-- The mod increases the max chat length to 1023 characters
-- Some voice features are currently not available, so some voices may sound a little different than expected.
 # Changelog
+## v1.3.0 through v1.3.2
+- Enabled dead chat
+- Fixed the stutter when sending a message
+- Added config option for max chat message size
+- Removed debug window
+- Fixed bug with dead chat regarding distance between players
 ## v1.2.0
 - Fixed chatting while holding another object while having a pocketed active walkie talkie
 - Fixed issue where player may not be heard if they are more than 50 meters away when the message is sent
