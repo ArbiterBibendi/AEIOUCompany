@@ -16,7 +16,7 @@ namespace AEIOU_Company;
 [HarmonyPatch]
 public class AutoPatches
 {
-    private static readonly int NEW_CHAT_SIZE = 1024;
+    private static int NEW_CHAT_SIZE = Plugin.ChatSize;
     private static TMP_InputField chatTextField = null;
     private static string lastChatMessage = "";
     private static readonly float[] emptySamples = new float[TTS.IN_BUFFER_SIZE];
@@ -164,7 +164,7 @@ public class AutoPatches
     [HarmonyPostfix]
     public static void EnableChat_performedPostfix(ref TMP_InputField ___chatTextField)
     {
-        ___chatTextField.characterLimit = NEW_CHAT_SIZE - 1;
+        ___chatTextField.characterLimit = NEW_CHAT_SIZE;
         chatTextField = ___chatTextField;
     }
 
@@ -190,7 +190,7 @@ public class AutoPatches
                 if (instruction.opcode == OpCodes.Bge && foundFirstInstruction)
                 {
                     instructionToChange.opcode = OpCodes.Ldc_I4;
-                    instructionToChange.operand = NEW_CHAT_SIZE; // new max chat length
+                    instructionToChange.operand = NEW_CHAT_SIZE + 1; // new max chat length
                     Plugin.Log("Patched max chat length");
                     break;
                 }
