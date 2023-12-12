@@ -7,6 +7,7 @@ using TMPro;
 using UnityEngine;
 using Dissonance.Integrations.Unity_NFGO;
 using System.Collections;
+using System.Threading.Tasks;
 
 
 
@@ -30,6 +31,10 @@ public class AutoPatches
         lastChatMessage = chatMessage;
         
         Plugin.Log($"AddTextToChatOnServer: {chatMessage} {playerId}");
+        Task.Run(() => Speak(__instance, chatMessage, playerId));
+    }
+    public static void Speak(HUDManager __instance, string chatMessage, int playerId)
+    {
         PlayerControllerB player = null;
         for (int i = 0; i < __instance.playersManager.allPlayerScripts.Length; i++)
         {
