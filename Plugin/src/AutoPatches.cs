@@ -58,8 +58,18 @@ public class Patches
         {
             while (_speaks.Count > 0)
             {
-                Speak(__instance, _speaks[0].ChatMessage, _speaks[0].PlayerId);
-                _speaks.RemoveAt(0);
+                try
+                {
+                    Speak(__instance, _speaks[0].ChatMessage, _speaks[0].PlayerId);
+                    _speaks.RemoveAt(0);
+                }
+                catch (Exception e)
+                {
+                    Plugin.Log(e);
+                    _speaks.Clear();
+                    _isProcessing = false;
+                    return;
+                }
             }
             _isProcessing = false;
         });
@@ -80,6 +90,7 @@ public class Patches
             Plugin.Log("couldnt find player");
             return;
         }
+        Plugin.Log("Found player");
 
         GameObject AEIOUSpeakObject = player.gameObject.transform.Find("AEIOUSpeakObject")?.gameObject;
         if (AEIOUSpeakObject == null)
@@ -91,6 +102,7 @@ public class Patches
             AEIOUSpeakObject.AddComponent<AudioHighPassFilter>();
             AEIOUSpeakObject.AddComponent<AudioLowPassFilter>();
         }
+        Plugin.Log("Found AEIOUSpeakObject");
         AudioSource audioSource = AEIOUSpeakObject.GetComponent<AudioSource>();
         if (audioSource == null)
         {
@@ -103,7 +115,7 @@ public class Patches
         {
             audioSource.clip = AudioClip.Create("AEIOUCLIP", TTS.IN_BUFFER_SIZE, 1, 11025, false);
         }
-
+        Plugin.Log("Setting up clip");
         audioSource.clip.SetData(emptySamples, 0);
         audioSource.clip.SetData(samples, 0);
 
@@ -128,7 +140,6 @@ public class Patches
         AudioLowPassFilter lowPassFilter = AEIOUSpeakObject.GetComponent<AudioLowPassFilter>();
         if (lowPassFilter != null)
         {
-            Plugin.Log("AudioLowPassFilter not null!");
             lowPassFilter.lowpassResonanceQ = 1;
             lowPassFilter.cutoffFrequency = 5000;
         }
@@ -140,10 +151,7 @@ public class Patches
 
         Plugin.Log
         (
-            $"Playing audio: {audioSource.ToString()}\n" +
-            $"Playing audio: {audioSource.volume.ToString()}\n" +
-            $"Playing audio: {audioSource.ignoreListenerVolume.ToString()}\n" +
-            $"Playing audio: {audioSource.clip.ToString()}\n"
+            $"Playing audio: {audioSource.ToString()}" + audioSource.volume.ToString()
         );
         if (player.holdingWalkieTalkie && player.currentlyHeldObjectServer is WalkieTalkie walkieTalkie)
         {
