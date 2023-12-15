@@ -29,7 +29,7 @@ public class Patches
     [HarmonyPostfix]
     public static void AddPlayerChatMessageClientRpcPostfix(HUDManager __instance, string chatMessage, int playerId)
     {
-        if (lastChatMessage == chatMessage)
+        if (lastChatMessage == chatMessage || chatMessage.StartsWith("/"))
         {
             return;
         }
