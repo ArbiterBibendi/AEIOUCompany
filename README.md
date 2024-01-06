@@ -18,10 +18,15 @@ For help with singing check out the guides below
 - [**Steam** | Text To Speech Songs](https://steamcommunity.com/sharedfiles/filedetails/?id=919364352)
 
 - [**Steam** | Moonbase Alpha - ULTIMATE Text to Speech Handbook](https://steamcommunity.com/sharedfiles/filedetails/?id=482628855)
-### Relevant Videos
+### Videos
+- [**Youtube** | Lethal Company provides a realistic simulation of life working for the company](https://www.youtube.com/watch?v=rRH6jlt4UgI)
+
+- [**Youtube** | Trying out Random Lethal Company mods...](https://www.youtube.com/watch?v=bt-3ozflITQ)
+
 - [**Youtube** | Moonbase Alpha: The Musical](https://www.youtube.com/watch?v=CNPKXfb3rws)
 
 - [**Youtube** | Moonbase Alpha provides a realistic simulation of life on a natural satellite](https://www.youtube.com/watch?v=Hv6RbEOlqRo)
+
 
 
 
@@ -44,13 +49,16 @@ Place the `aeioucompany` folder into your `BepInEx/plugins` folder
 - My girlfriend and friends for helping me test in early stages
 - and anybody else who supported this mod or helped create anything that it uses
 # Changelog
-## v1.3.0 through v1.3.3
+## v1.3.5
+- Added config option for enabling chatting while dead (On by default)
+- Added config option for ignoring messages with a certain prefix ("/" by default)
+- Hopefully fixed duplicate audio playback when level is changing sometimes
+## v1.3.0 through v1.3.4
 - Enabled dead chat
 - Fixed the stutter when sending a message
 - Added config option for max chat message size
 - Removed debug window
-- Fixed bug with dead chat regarding distance between players
-- Fixed stability when using some other mods
+- Various stability patches
 ## v1.2.0
 - Fixed chatting while holding another object while having a pocketed active walkie talkie
 - Fixed issue where player may not be heard if they are more than 50 meters away when the message is sent
