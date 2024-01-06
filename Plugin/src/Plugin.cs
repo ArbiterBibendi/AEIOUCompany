@@ -22,6 +22,8 @@ namespace AEIOU_Company
         public static float TTSVolume = 0f;
         public static float TTSDopperLevel;
         public static int ChatSize;
+        public static bool EnableDeadChat = true;
+        public static string BlacklistPrefix = "/";
 
         public static void Log(object data)
         {
@@ -42,6 +44,8 @@ namespace AEIOU_Company
             TTSVolume = Config.Bind<float>("General", "Volume", 1f, "Volume scale of text-to-speech-voice. Values range from 0 to 1").Value;
             TTSDopperLevel = Config.Bind<float>("General", "Doppler Effect Level", 1f, "Values range from 0 to 1").Value;
             ChatSize = Config.Bind<int>("Advanced", "Chat Character Limit", 1024, "WARNING: Everybody must have the same value set for this!").Value;
+            EnableDeadChat = Config.Bind<bool>("General", "Enable Dead Chat", true, "Enables chatting after dead").Value;
+            BlacklistPrefix = Config.Bind<string>("General", "Blacklist Prefix", "/", "TTS Ignores messages starting with this").Value;
 
             TTS.Init();
             base.Logger.LogInfo($"Plugin {PluginInfo.PLUGIN_GUID} is loaded!");

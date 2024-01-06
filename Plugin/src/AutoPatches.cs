@@ -29,7 +29,7 @@ public class Patches
     [HarmonyPostfix]
     public static void AddPlayerChatMessageClientRpcPostfix(HUDManager __instance, string chatMessage, int playerId)
     {
-        if (lastChatMessage == chatMessage)
+        if (lastChatMessage == chatMessage || chatMessage.StartsWith(Plugin.BlacklistPrefix))
         {
             return;
         }
@@ -219,6 +219,11 @@ public class Patches
     [HarmonyPostfix]
     public static void KillPlayerPostfix(PlayerControllerB __instance)
     {
+        if (!Plugin.EnableDeadChat)
+        {
+            Plugin.Log("EnableDeadChat false, skipping KillPlayerPostfix patch");
+            return;
+        }
         HUDManager.Instance.HideHUD(false);
         HUDManager.Instance.UpdateHealthUI(100, false);
         Plugin.Log("Player died, re-enabling UI");
@@ -228,6 +233,11 @@ public class Patches
     [HarmonyTranspiler]
     public static IEnumerable<CodeInstruction> EnableChat_performedTranspiler(IEnumerable<CodeInstruction> oldInstructions)
     {
+        if (!Plugin.EnableDeadChat)
+        {
+            Plugin.Log("EnableDeadChat false, skipping EnableChat_performedTranspiler patch");
+            return oldInstructions;
+        }
         List<CodeInstruction> newInstructions = new List<CodeInstruction>(oldInstructions);
         for (int i = 0; i < newInstructions.Count - 3; i++)
         {
@@ -254,7 +264,14 @@ public class Patches
     {
         List<CodeInstruction> newInstructions = new List<CodeInstruction>(oldInstructions);
         patchMaxChatSize(newInstructions);
-        patchDeadChat(newInstructions);
+        if (Plugin.EnableDeadChat)
+        {
+            patchDeadChat(newInstructions);
+        }
+        else
+        {
+            Plugin.Log("EnableDeadChat false, skipping SubmitChat_performedTranspiler patch");
+        }
 
         static void patchMaxChatSize(List<CodeInstruction> newInstructions)
         {
