@@ -120,7 +120,7 @@ public class Patches
         audioSource.clip.SetData(samples, 0);
 
         audioSource.outputAudioMixerGroup = SoundManager.Instance.playerVoiceMixers[player.playerClientId];
-
+        audioSource.playOnAwake = false;
         audioSource.rolloffMode = AudioRolloffMode.Custom;
         audioSource.minDistance = 1f;
         audioSource.maxDistance = 40f;
