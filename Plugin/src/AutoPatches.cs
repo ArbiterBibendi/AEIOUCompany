@@ -44,7 +44,7 @@ public class Patches
 		}
 
         Plugin.Log($"AddTextToChatOnServer: {chatMessage} {playerId}");
-        Speak(__instance, chatMessage, playerId);
+        QueueSpeak(__instance, chatMessage, playerId);
     }
 
     [HarmonyPatch(typeof(HUDManager), "Update")]
@@ -57,121 +57,7 @@ public class Patches
 
             if (!currentSpeechTask.IsCanceled && !currentSpeechTask.IsFaulted)
             {
-                var playerId = currentSpeechTask.Result.PlayerId;
-                PlayerControllerB player = __instance.playersManager.allPlayerScripts[playerId];
-                if (player == null)
-                {
-                    Plugin.Log("couldnt find player");
-                    return;
-                }
-
-                Plugin.Log("Found player");
-
-                GameObject AEIOUSpeakObject = player.gameObject.transform.Find("AEIOUSpeakObject")?.gameObject;
-                if (AEIOUSpeakObject == null)
-                {
-                    AEIOUSpeakObject = new GameObject("AEIOUSpeakObject");
-                    AEIOUSpeakObject.transform.parent = player.transform;
-                    AEIOUSpeakObject.transform.localPosition = Vector3.zero;
-                    AEIOUSpeakObject.AddComponent<AudioSource>();
-                    AEIOUSpeakObject.AddComponent<AudioHighPassFilter>();
-                    AEIOUSpeakObject.AddComponent<AudioLowPassFilter>();
-                }
-
-                Plugin.Log("Found AEIOUSpeakObject");
-                AudioSource audioSource = AEIOUSpeakObject.GetComponent<AudioSource>();
-                if (audioSource == null)
-                {
-                    Plugin.LogError($"Couldn't speak, AudioSource was null");
-                    return;
-                }
-
-                if (audioSource.clip == null)
-                {
-                    audioSource.clip = AudioClip.Create("AEIOUCLIP", TTS.IN_BUFFER_SIZE, 1, 11025, false);
-                }
-
-                Plugin.Log("Setting up clip");
-                audioSource.clip.SetData(emptySamples, 0);
-                audioSource.clip.SetData(currentSpeechTask.Result.AudioData, 0);
-
-                audioSource.outputAudioMixerGroup = SoundManager.Instance.playerVoiceMixers[player.playerClientId];
-                audioSource.playOnAwake = false;
-                audioSource.rolloffMode = AudioRolloffMode.Custom;
-                audioSource.minDistance = 1f;
-                audioSource.maxDistance = 40f;
-                audioSource.dopplerLevel = Plugin.TTSDopperLevel;
-                audioSource.pitch = 1f;
-                audioSource.spatialize = true;
-                audioSource.spatialBlend = player.isPlayerDead ? 0f : 1f;
-                bool playerHasDeathPermissions =
-                    !player.isPlayerDead || StartOfRound.Instance.localPlayerController.isPlayerDead;
-                audioSource.volume = playerHasDeathPermissions ? Plugin.TTSVolume : 0;
-
-                AudioHighPassFilter highPassFilter = AEIOUSpeakObject.GetComponent<AudioHighPassFilter>();
-                if (highPassFilter != null)
-                {
-                    highPassFilter.enabled = false;
-                }
-
-                AudioLowPassFilter lowPassFilter = AEIOUSpeakObject.GetComponent<AudioLowPassFilter>();
-                if (lowPassFilter != null)
-                {
-                    lowPassFilter.lowpassResonanceQ = 1;
-                    lowPassFilter.cutoffFrequency = 5000;
-                }
-
-                if (audioSource.isPlaying)
-                {
-                    audioSource.Stop(true);
-                }
-
-                Plugin.Log
-                (
-                    $"Playing audio: {audioSource.ToString()}" + audioSource.volume.ToString()
-                );
-                if (player.holdingWalkieTalkie && player.currentlyHeldObjectServer is WalkieTalkie walkieTalkie)
-                {
-                    Plugin.Log("WalkieTalkie");
-                    bool localPlayerIsUsingWalkieTalkie = false;
-                    for (int i = 0; i < WalkieTalkie.allWalkieTalkies.Count; i++)
-                    {
-                        if
-                        (
-                            WalkieTalkie.allWalkieTalkies[i].playerHeldBy == StartOfRound.Instance.localPlayerController
-                            && WalkieTalkie.allWalkieTalkies[i].isBeingUsed
-                        )
-                        {
-                            localPlayerIsUsingWalkieTalkie = true;
-                        }
-                    }
-
-                    if
-                    (
-                        walkieTalkie != null
-                        && walkieTalkie.isBeingUsed
-                        && localPlayerIsUsingWalkieTalkie
-                    )
-                    {
-                        audioSource.volume = Plugin.TTSVolume;
-                        if (player == StartOfRound.Instance.localPlayerController)
-                        {
-                            Plugin.Log("Pushing walkie button");
-                            player.playerBodyAnimator.SetBool("walkieTalkie", true);
-                            walkieTalkie.StartCoroutine(WaitAndStopUsingWalkieTalkie(audioSource.clip, player, currentSpeechTask.Result.AudioLengthInSeconds));
-                        }
-                        else
-                        {
-                            highPassFilter.enabled = true;
-                            lowPassFilter.lowpassResonanceQ = 3f;
-                            lowPassFilter.cutoffFrequency = 4000;
-                            audioSource.spatialBlend = 0f;
-                        }
-                    }
-                }
-
-                audioSource.PlayOneShot(audioSource.clip, 1f);
-                RoundManager.Instance.PlayAudibleNoise(AEIOUSpeakObject.transform.position, 25f, 0.7f);
+                Speak(__instance.playersManager, currentSpeechTask.Result);
             }
 
             currentSpeechTask = null;
@@ -185,10 +71,126 @@ public class Patches
         }
     }
 
-    private static void Speak(HUDManager __instance, string chatMessage, int playerId)
+    private static void QueueSpeak(HUDManager __instance, string chatMessage, int playerId)
     {
         Plugin.Log("Speak");
         pendingSpeech.Add(new Speak(chatMessage, playerId));
+    }
+
+    private static void Speak(StartOfRound playersManager, TTS.SpeechData speechData)
+    {
+        var playerId = speechData.PlayerId;
+        PlayerControllerB player = playersManager.allPlayerScripts[playerId];
+        if (player == null)
+        {
+            Plugin.Log("couldnt find player");
+            return;
+        }
+
+        Plugin.Log("Found player");
+
+        GameObject AEIOUSpeakObject = player.gameObject.transform.Find("AEIOUSpeakObject")?.gameObject;
+        if (AEIOUSpeakObject == null)
+        {
+            AEIOUSpeakObject = new GameObject("AEIOUSpeakObject");
+            AEIOUSpeakObject.transform.parent = player.transform;
+            AEIOUSpeakObject.transform.localPosition = Vector3.zero;
+            AEIOUSpeakObject.AddComponent<AudioSource>();
+            AEIOUSpeakObject.AddComponent<AudioHighPassFilter>();
+            AEIOUSpeakObject.AddComponent<AudioLowPassFilter>();
+        }
+
+        Plugin.Log("Found AEIOUSpeakObject");
+        AudioSource audioSource = AEIOUSpeakObject.GetComponent<AudioSource>();
+        if (audioSource == null)
+        {
+            Plugin.LogError($"Couldn't speak, AudioSource was null");
+            return;
+        }
+
+        if (audioSource.clip == null)
+        {
+            audioSource.clip = AudioClip.Create("AEIOUCLIP", TTS.IN_BUFFER_SIZE, 1, 11025, false);
+        }
+
+        Plugin.Log("Setting up clip");
+        audioSource.clip.SetData(emptySamples, 0);
+        audioSource.clip.SetData(speechData.AudioData, 0);
+
+        audioSource.outputAudioMixerGroup = SoundManager.Instance.playerVoiceMixers[player.playerClientId];
+        audioSource.playOnAwake = false;
+        audioSource.rolloffMode = AudioRolloffMode.Custom;
+        audioSource.minDistance = 1f;
+        audioSource.maxDistance = 40f;
+        audioSource.dopplerLevel = Plugin.TTSDopperLevel;
+        audioSource.pitch = 1f;
+        audioSource.spatialize = true;
+        audioSource.spatialBlend = player.isPlayerDead ? 0f : 1f;
+        bool playerHasDeathPermissions =
+            !player.isPlayerDead || StartOfRound.Instance.localPlayerController.isPlayerDead;
+        audioSource.volume = playerHasDeathPermissions ? Plugin.TTSVolume : 0;
+
+        AudioHighPassFilter highPassFilter = AEIOUSpeakObject.GetComponent<AudioHighPassFilter>();
+        if (highPassFilter != null)
+        {
+            highPassFilter.enabled = false;
+        }
+
+        AudioLowPassFilter lowPassFilter = AEIOUSpeakObject.GetComponent<AudioLowPassFilter>();
+        if (lowPassFilter != null)
+        {
+            lowPassFilter.lowpassResonanceQ = 1;
+            lowPassFilter.cutoffFrequency = 5000;
+        }
+
+        if (audioSource.isPlaying)
+        {
+            audioSource.Stop(true);
+        }
+
+        Plugin.Log($"Playing audio: {audioSource}{audioSource.volume}");
+        if (player.holdingWalkieTalkie && player.currentlyHeldObjectServer is WalkieTalkie walkieTalkie)
+        {
+            Plugin.Log("WalkieTalkie");
+            bool localPlayerIsUsingWalkieTalkie = false;
+            for (int i = 0; i < WalkieTalkie.allWalkieTalkies.Count; i++)
+            {
+                if
+                (
+                    WalkieTalkie.allWalkieTalkies[i].playerHeldBy == StartOfRound.Instance.localPlayerController
+                    && WalkieTalkie.allWalkieTalkies[i].isBeingUsed
+                )
+                {
+                    localPlayerIsUsingWalkieTalkie = true;
+                }
+            }
+
+            if
+            (
+                walkieTalkie != null
+                && walkieTalkie.isBeingUsed
+                && localPlayerIsUsingWalkieTalkie
+            )
+            {
+                audioSource.volume = Plugin.TTSVolume;
+                if (player == StartOfRound.Instance.localPlayerController)
+                {
+                    Plugin.Log("Pushing walkie button");
+                    player.playerBodyAnimator.SetBool("walkieTalkie", true);
+                    walkieTalkie.StartCoroutine(WaitAndStopUsingWalkieTalkie(audioSource.clip, player, speechData.AudioLengthInSeconds));
+                }
+                else
+                {
+                    highPassFilter.enabled = true;
+                    lowPassFilter.lowpassResonanceQ = 3f;
+                    lowPassFilter.cutoffFrequency = 4000;
+                    audioSource.spatialBlend = 0f;
+                }
+            }
+        }
+
+        audioSource.PlayOneShot(audioSource.clip, 1f);
+        RoundManager.Instance.PlayAudibleNoise(AEIOUSpeakObject.transform.position, 25f, 0.7f);
     }
 
     private static IEnumerator WaitAndStopUsingWalkieTalkie(AudioClip clip, PlayerControllerB player, float audioLengthInSeconds)
