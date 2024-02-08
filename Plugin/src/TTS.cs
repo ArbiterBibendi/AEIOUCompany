@@ -2,23 +2,37 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Pipes;
-using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace AEIOU_Company;
-public static class TTS
+static class TTS
 {
-    static readonly int OUT_BUFFER_SIZE = 8192; // text
-    public static readonly int IN_BUFFER_SIZE = 8388608; // 8MB pcm audio
-    public static float CurrentAudioLengthInSeconds = 0.0f;
-    static float[] floatBuffer = new float[IN_BUFFER_SIZE];
+    public readonly struct SpeechData
+    {
+        public readonly int PlayerId;
+        public readonly float[] AudioData;
+        public readonly float AudioLengthInSeconds;
+
+        public SpeechData(int playerPlayerId, float[] audioData, float audioLengthInSeconds)
+        {
+            PlayerId = playerPlayerId;
+            AudioData = audioData;
+            AudioLengthInSeconds = audioLengthInSeconds;
+        }
+    }
+
+    private const int OUT_BUFFER_SIZE = 8192; // text
+    public const int IN_BUFFER_SIZE = 8388608; // 8MB pcm audio
+
+    private static readonly float[] audioFloatBuffer = new float[IN_BUFFER_SIZE];
+    private static byte[] audioByteBuffer = new byte[IN_BUFFER_SIZE * 2];
     private static NamedPipeClientStream _namedPipeClientStream;
     private static StreamWriter _streamWriter;
-    private static BinaryWriter _binaryWriter;
     private static BinaryReader _binaryReader;
     private static bool _initialized = false;
+
     public static void Init()
     {
         StartSpeakServer();
@@ -26,7 +40,6 @@ public static class TTS
         {
             _namedPipeClientStream = new NamedPipeClientStream("AEIOUCOMPANYMOD");
             _streamWriter = new StreamWriter(_namedPipeClientStream, Encoding.UTF8, OUT_BUFFER_SIZE, true);
-            _binaryWriter = new BinaryWriter(_namedPipeClientStream, Encoding.UTF8, true);
             _binaryReader = new BinaryReader(_namedPipeClientStream, Encoding.UTF8, true);
         }
         catch (IOException e)
@@ -36,8 +49,6 @@ public static class TTS
         ConnectToSpeakServer();
         _initialized = true;
     }
-
-
 
     public static void Speak(string message)
     {
@@ -55,68 +66,57 @@ public static class TTS
             Plugin.LogError("Speak" + e);
         }
     }
-    public static float[] SpeakToMemory(string message, float volumeScale = 1f)
+
+    public static SpeechData SpeakToMemory(int playerId, string message, float volumeScale = 1f)
     {
         if (!_initialized)
         {
             Plugin.LogError("Tried to speak before initializing TTS!");
-            return default(float[]);
+            return default;
         }
+        message = message.Replace("\r", "").Replace("\n", "");
 
         SendMsg(message, "msg");
-        ClearSamplesBuffer();
-        int msgLength = _binaryReader.ReadInt32(); //msg length is number of samples 16 bit
-        byte[] bytes = _binaryReader.ReadBytes(msgLength);
-        for (int i = 0; i < msgLength - 1; i += 2)
-        {
-            int floatBufferIndex = i / 2;
-            float nextSample = volumeScale * ((float)BitConverter.ToInt16(bytes, i) / 32767f); // convert half -1 to 1 float
-            if (i < floatBuffer.Length) // if audio clip is larger than buffer, we still want to consume every byte on the stream
-            {
-                floatBuffer[floatBufferIndex] = nextSample;
-            }
-        }
+
+        int msgLength = _binaryReader.ReadInt32();
+        if (msgLength > audioByteBuffer.Length) { audioByteBuffer = new byte[msgLength]; }
+
+        Array.Clear(audioFloatBuffer, 0, audioFloatBuffer.Length);
         int lastNonZeroValueIndex = 0;
-        for (int i = floatBuffer.Length - 1; i > 0; i--)
+
+        _binaryReader.Read(audioByteBuffer, 0, msgLength);
+        for (int i = 0; i < Math.Min(msgLength / 2, audioFloatBuffer.Length); i++)
         {
-            if (floatBuffer[i] != 0.0)
-            {
-                lastNonZeroValueIndex = i;
-                break;
-            }
+            float nextSample = volumeScale * ((float)BitConverter.ToInt16(audioByteBuffer, i * 2) / 32767f); // convert half -1 to 1 float
+            audioFloatBuffer[i] = nextSample;
+            if (nextSample != 0f) { lastNonZeroValueIndex = i; }
         }
-        CurrentAudioLengthInSeconds = (float)lastNonZeroValueIndex / (float)11025; // 11025 hz
+
+        var currentAudioLengthInSeconds = (float)lastNonZeroValueIndex / (float)11025; // 11025 hz
 
         Plugin.Log($"END");
-        return floatBuffer;
+        return new SpeechData(playerId, audioFloatBuffer, currentAudioLengthInSeconds);
     }
 
     private static void SendMsg(string message, string prefix) // prefix msgA or msg
     {
-        Plugin.Log($"Sending: {prefix}={message}]");
+        if (!_namedPipeClientStream.IsConnected)
+        {
+            StartSpeakServer();
+            ConnectToSpeakServer();
+        }
+
+        message = $"{prefix}=[:np]{message}]";
+        Plugin.Log($"Sending: {message}");
         try
         {
-            _streamWriter.WriteLine(); // write empty line to test if pipe is unbroken
+            _streamWriter.WriteLine(message);
             _streamWriter.Flush();
-        }
-        catch (IOException e)
-        {
-            if (e.Message.Contains("Pipe is broken"))
-            {
-                StartSpeakServer();
-                ConnectToSpeakServer();
-            }
-            else
-            {
-                Plugin.LogError(e);
-            }
         }
         catch (Exception e)
         {
             Plugin.LogError(e);
         }
-        _streamWriter.WriteLine($"{prefix}=[:np]{message}]"); // ] to close off any accidentally opened talk commands, [:np] default voice
-        _streamWriter.Flush();
     }
 
     private static void ConnectToSpeakServer()
@@ -133,14 +133,6 @@ public static class TTS
         catch (IOException)
         {
             Plugin.LogError("IOException while trying to ConnectToSpeakServer");
-        }
-    }
-
-    private static void ClearSamplesBuffer()
-    {
-        for (int i = 0; i < floatBuffer.Length; i++)
-        {
-            floatBuffer[i] = 0f;
         }
     }
 
