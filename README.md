@@ -49,6 +49,8 @@ Place the `aeioucompany` folder into your `BepInEx/plugins` folder
 - My girlfriend and friends for helping me test in early stages
 - and anybody else who supported this mod or helped create anything that it uses
 # Changelog
+## v1.3.7
+- Recompiled for newer game library
 ## v1.3.6
 - Stability Improvement (Thank you Juan)
 ## v1.3.5
