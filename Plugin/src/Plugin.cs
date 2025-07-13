@@ -16,6 +16,7 @@ namespace AEIOU_Company
     [BepInPlugin(PluginInfo.PLUGIN_GUID, PluginInfo.PLUGIN_NAME, PluginInfo.PLUGIN_VERSION)]
     public class Plugin : BaseUnityPlugin
     {
+        public static string DefaultVoice = "np";
         public static Harmony Harmony = null;
         protected static new ManualLogSource Logger = null;
         public static bool PlayStartingUpMessage = false;
@@ -46,6 +47,7 @@ namespace AEIOU_Company
             ChatSize = Config.Bind<int>("Advanced", "Chat Character Limit", 1024, "WARNING: Everybody must have the same value set for this!").Value;
             EnableDeadChat = Config.Bind<bool>("General", "Enable Dead Chat", true, "Enables chatting after dead").Value;
             BlacklistPrefix = Config.Bind<string>("General", "Blacklist Prefix", "/", "TTS Ignores messages starting with this").Value;
+            DefaultVoice = Config.Bind<string>("General", "Voice", "np", "Sets the voice used for TTS. Valid voices: nb, nd, nf, nh, nk, np, nr, nu, nw").Value;
 
             TTS.Init();
             base.Logger.LogInfo($"Plugin {PluginInfo.PLUGIN_GUID} is loaded!");
