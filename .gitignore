@@ -1,1 +1,4 @@
 release/*
+.vs
+.test.bat
+.build.bat
