@@ -106,7 +106,7 @@ static class TTS
             ConnectToSpeakServer();
         }
 
-        message = $"{prefix}=[:np]{message}]";
+        message = $"{prefix}=[:{Plugin.DefaultVoice}]{message}]";
         Plugin.Log($"Sending: {message}");
         try
         {
